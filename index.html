@@ -191,45 +191,6 @@ body {
 }
 
 /* =========================================================
-   RESPONSIVE PREVIEW CONTROL
-========================================================= */
-.preview-size-control {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-width: 210px;
-}
-
-.preview-size-label {
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--muted);
-    white-space: nowrap;
-}
-
-#previewWidth {
-    width: 105px;
-    accent-color: var(--accent);
-}
-
-.preview-width-value {
-    min-width: 48px;
-    font-size: 10px;
-    font-weight: 700;
-    color: var(--text);
-    text-align: right;
-}
-
-@media (max-width: 1050px) {
-    .preview-size-control { min-width: 145px; }
-    #previewWidth { width: 75px; }
-}
-
-@media (max-width: 760px) {
-    .preview-size-control { display: none; }
-}
-
-/* =========================================================
    SIDEBAR
 ========================================================= */
 
@@ -460,7 +421,7 @@ body {
     border: 1px solid #d2d7db;
     border-radius: 8px;
     box-shadow: 0 5px 20px rgba(0,0,0,.1);
-    z-index: 300;
+    z-index: 5000;
 }
 
 .property-panel.hidden {
@@ -679,6 +640,39 @@ body {
     opacity: 1;
     transform: translateY(0);
 }
+
+.grid-zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 12px;
+}
+.grid-zoom-controls button {
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    border-radius: 6px;
+    min-width: 32px;
+    height: 30px;
+    padding: 0 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+.grid-zoom-controls button:hover {
+    background: #f1f5f9;
+}
+#zoomValue {
+    min-width: 52px;
+    text-align: center;
+    font-size: 13px;
+    color: #475569;
+}
+
+
+.hue-slider-green {
+    accent-color: #2e8b57;
+}
+
+#hueSlider{accent-color:#4f8f4f}.hue-slider-wrap{position:relative;width:260px;height:24px;display:flex;align-items:center}.hue-slider-gradient{position:absolute;left:0;right:0;top:7px;height:10px;border-radius:999px;background:linear-gradient(to right,hsl(215,70%,55%),hsl(195,70%,55%),hsl(175,65%,50%),hsl(150,65%,48%),hsl(125,60%,45%),hsl(100,65%,48%),hsl(75,65%,48%),hsl(55,75%,52%),hsl(35,78%,52%),hsl(15,78%,52%),hsl(350,72%,55%),hsl(315,65%,55%),hsl(285,60%,55%),hsl(250,65%,58%));pointer-events:none}.hue-slider-wrap .hue-slider{position:relative;z-index:1;width:260px;background:transparent}
 </style>
 </head>
 
@@ -706,11 +700,12 @@ body {
         <button class="device-button" data-device="mobile">Mobile</button>
     </div>
 
-    <div class="preview-size-control" title="Preview width">
-        <span class="preview-size-label">Width</span>
-        <input id="previewWidth" type="range" min="320" max="1440" step="1" value="1200" aria-label="Preview width">
-        <span id="previewWidthLabel" class="preview-width-value">1200px</span>
-    </div>
+<div class="grid-zoom-controls" aria-label="Grid zoom controls">
+  <button type="button" id="zoomOutButton" title="Zoom out">−</button>
+  <span id="zoomValue">100%</span>
+  <button type="button" id="zoomInButton" title="Zoom in">+</button>
+  <button type="button" id="zoomResetButton" title="Reset zoom">Reset</button>
+</div>
 
     <button
         id="copyButton"
@@ -914,24 +909,18 @@ body {
 
 <footer class="bottom-bar">
 
-    <span class="temperature-label cool">
-        Cool
-    </span>
-
-    <input
-        id="hueSlider"
-        class="hue-slider"
-        type="range"
-        min="0"
-        max="100"
-        value="0"
-    >
-
-    <span class="temperature-label warm">
-        Warm
-    </span>
-
-    <div class="hue-preview"></div>
+    <div class="hue-slider-wrap">
+        <input
+            id="hueSlider"
+            class="hue-slider"
+            type="range"
+            min="0"
+            max="100"
+            value="0"
+            aria-label="Color gradient"
+        >
+        <div id="hueGradient" class="hue-slider-gradient"></div>
+    </div>
 
 </footer>
 
@@ -1020,6 +1009,13 @@ const DEVICE_CONFIG = {
 
 let activeDevice = "pc";
 let previewWidth = 1200;
+
+
+// Core app state
+let boxes = [];
+let selectedBoxId = null;
+let nextBoxNumber = 1;
+let addMode = false;
 
 /* =========================================================
    RESPONSIVE LAYOUT MODEL
@@ -1424,8 +1420,20 @@ function canResizeParent(box, newAbsoluteRect) {
 /* =========================================================
    COLORS
 ========================================================= */
-function currentHue() {
-    return 210 + Number(hueSlider.value) * 1.5;
+
+/* =========================================================
+   GREEN COLOR SCHEMES
+========================================================= */
+function greenHueFromSlider() {
+    // The slider still provides variety, but remains in a green family:
+    // emerald -> teal-green -> leaf -> forest.
+    const t = Number(hueSlider.value) / 100;
+    return Math.round(135 + t * 65);
+}
+
+function currentHue(){
+ const t=Number(hueSlider.value)/100; const s=[{t:0,h:215},{t:.08,h:195},{t:.16,h:175},{t:.24,h:150},{t:.32,h:125},{t:.40,h:100},{t:.48,h:75},{t:.56,h:55},{t:.64,h:35},{t:.72,h:15},{t:.80,h:350},{t:.88,h:315},{t:0.94,h:285},{t:1,h:250}];
+ for(let i=0;i<s.length-1;i++){if(t<=s[i+1].t){const a=s[i],b=s[i+1],q=(t-a.t)/(b.t-a.t);return Math.round(a.h+(b.h-a.h)*q);}} return 55;
 }
 
 function getBoxColor(box) {
@@ -2016,13 +2024,13 @@ canvas.addEventListener("pointerdown", event => {
     const rect = canvas.getBoundingClientRect();
 
     const x = clamp(
-        snapPixelsToCells(event.clientX - rect.left),
+        snapPixelsToCells((event.clientX - rect.left) / gridZoom),
         0,
         GRID_COLUMNS - 1
     );
 
     const y = clamp(
-        snapPixelsToCells(event.clientY - rect.top),
+        snapPixelsToCells((event.clientY - rect.top) / gridZoom),
         0,
         GRID_ROWS - 1
     );
@@ -2053,13 +2061,13 @@ canvas.addEventListener("pointerup", event => {
     const rect = canvas.getBoundingClientRect();
 
     const endX = clamp(
-        snapPixelsToCells(event.clientX - rect.left),
+        snapPixelsToCells((event.clientX - rect.left) / gridZoom),
         0,
         GRID_COLUMNS - 1
     );
 
     const endY = clamp(
-        snapPixelsToCells(event.clientY - rect.top),
+        snapPixelsToCells((event.clientY - rect.top) / gridZoom),
         0,
         GRID_ROWS - 1
     );
@@ -2956,43 +2964,171 @@ function layoutText(box, device) {
     return `Auto: X ${effective.x + 1}, Y ${effective.y + 1}, Width ${effective.width}, Height ${effective.height}`;
 }
 
+
+/* =========================================================
+   GRID-ONLY ZOOM
+========================================================= */
+let gridZoom = 1;
+const MIN_GRID_ZOOM = 0.5, MAX_GRID_ZOOM = 2.5, GRID_ZOOM_STEP = 0.1;
+function applyGridZoom(){const v=document.getElementById("zoomValue"),c=document.getElementById("canvas"),a=document.getElementById("canvasArea");if(v)v.textContent=`${Math.round(gridZoom*100)}%`;if(c){const w=Number(previewWidth)||1200,ht=GRID_ROWS*getDisplayCellSize();c.style.transformOrigin="top left";c.style.transform=`scale(${gridZoom})`;c.style.width=`${w}px`;c.style.height=`${ht}px`;c.style.marginRight=`${Math.max(0,w*(gridZoom-1))}px`;c.style.marginBottom=`${Math.max(0,ht*(gridZoom-1))}px`;}if(a)a.style.overflow="auto";}
+document.getElementById("zoomInButton")?.addEventListener("click",()=>{gridZoom=Math.min(MAX_GRID_ZOOM,+(gridZoom+GRID_ZOOM_STEP).toFixed(2));applyGridZoom();});
+document.getElementById("zoomOutButton")?.addEventListener("click",()=>{gridZoom=Math.max(MIN_GRID_ZOOM,+(gridZoom-GRID_ZOOM_STEP).toFixed(2));applyGridZoom();});
+document.getElementById("zoomResetButton")?.addEventListener("click",()=>{gridZoom=1;applyGridZoom();});
+
+applyGridZoom();
+
 function generateExportText() {
     ensureLayouts();
 
-    let text = `PROJECT: ${projectNameInput.value.trim() || "Untitled Project"}
+    const lines = [];
 
-COLOR SCHEME
-Hue Slider: ${hueSlider.value}%
-Primary (60%): ${hexFromColor(`hsl(${currentHue()},30%,90%)`)}
-Secondary (30%): ${hexFromColor(`hsl(${currentHue()},45%,78%)`)}
-Accent (10%): ${hexFromColor(`hsl(${currentHue()},70%,55%)`)}
+    lines.push(`WEB PAGE LAYOUT PLAN`);
+    lines.push(`====================`);
+    lines.push(``);
+    lines.push(`IMPORTANT IMPLEMENTATION NOTE:`);
+    lines.push(`The dimensions and grid positions in this document are APPROXIMATE DESIGN GUIDES.`);
+    lines.push(`They are NOT fixed pixel dimensions, required CSS values, or implementation constraints.`);
+    lines.push(``);
+    lines.push(`Use this plan to understand:`);
+    lines.push(`- Overall page structure`);
+    lines.push(`- Visual hierarchy`);
+    lines.push(`- Relative proportions`);
+    lines.push(`- Position and relationships of major elements`);
+    lines.push(`- Parent/child relationships`);
+    lines.push(`- Intended responsive behavior`);
+    lines.push(`- Color scheme`);
+    lines.push(``);
+    lines.push(`The final website should use responsive HTML/CSS and adapt naturally to`);
+    lines.push(`different screen sizes, window sizes, and orientations.`);
+    lines.push(`DO NOT reproduce the planner's grid in the final website.`);
+    lines.push(`DO NOT treat grid coordinates, cell counts, or planner dimensions as`);
+    lines.push(`exact implementation requirements.`);
+    lines.push(``);
 
-RESPONSIVE BREAKPOINTS
-PC: ${DEVICE_CONFIG.pc.columns} columns × ${DEVICE_CONFIG.pc.rows} rows | Base layout | Default preview ${DEVICE_CONFIG.pc.defaultWidth}px
-Tablet: ${DEVICE_CONFIG.tablet.columns} columns × ${DEVICE_CONFIG.tablet.rows} rows | PC base unless overridden | Default preview ${DEVICE_CONFIG.tablet.defaultWidth}px
-Mobile: ${DEVICE_CONFIG.mobile.columns} columns × ${DEVICE_CONFIG.mobile.rows} rows | PC base unless overridden | Default preview ${DEVICE_CONFIG.mobile.defaultWidth}px
-Current Preview Width: ${Math.round(previewWidth)}px
+    lines.push(`PROJECT: ${projectNameInput.value.trim() || "Untitled Project"}`);
+    lines.push(``);
 
-`;
+    lines.push(`RESPONSIVE INTENT`);
+    lines.push(`=================`);
+    lines.push(``);
+    lines.push(`PC / DESKTOP:`);
+    lines.push(`Use the PC layout as the primary/base visual composition.`);
+    lines.push(`Prioritize the relationships and hierarchy shown in the planner.`);
+    lines.push(``);
+    lines.push(`TABLET:`);
+    lines.push(`Adapt the base layout to a narrower viewport.`);
+    lines.push(`Preserve the intended hierarchy, but allow elements to resize, wrap,`);
+    lines.push(`stack, or reposition when appropriate.`);
+    lines.push(``);
+    lines.push(`MOBILE:`);
+    lines.push(`Adapt the layout to a narrow viewport.`);
+    lines.push(`Elements may stack, become full-width, collapse, or reposition.`);
+    lines.push(`Prioritize usability and the visual relationships shown in the plan.`);
+    lines.push(``);
+
+    const primary = hexFromColor(`hsl(${currentHue()},30%,90%)`);
+    const secondary = hexFromColor(`hsl(${currentHue()},45%,78%)`);
+    const accent = hexFromColor(`hsl(${currentHue()},70%,55%)`);
+
+    lines.push(`COLOR SYSTEM`);
+    lines.push(`============`);
+    lines.push(``);
+    lines.push(`Primary (approximately 60%): ${primary}`);
+    lines.push(`Secondary (approximately 30%): ${secondary}`);
+    lines.push(`Accent (approximately 10%): ${accent}`);
+    lines.push(`Hue setting: approximately ${currentHue()}°`);
+    lines.push(``);
+    lines.push(`These colors are visual design references, not mandatory implementation values.`);
+    lines.push(`The final implementation may adjust shades for accessibility, contrast, and usability.`);
+    lines.push(``);
+
+    lines.push(`PAGE ELEMENTS`);
+    lines.push(`=============`);
+    lines.push(``);
+
+    function qualitativeWidth(box, mode) {
+        const layout = getEffectiveLayout(box, mode, {});
+        const cols = DEVICE_CONFIG[mode].columns;
+        const ratio = layout.width / cols;
+        if (ratio >= 0.85) return "full-width";
+        if (ratio >= 0.60) return "large";
+        if (ratio >= 0.35) return "medium";
+        return "small";
+    }
+
+    function qualitativePosition(box, mode) {
+        const layout = getEffectiveLayout(box, mode, {});
+        const cfg = DEVICE_CONFIG[mode];
+        const cx = (layout.x + layout.width / 2) / cfg.columns;
+        const cy = (layout.y + layout.height / 2) / cfg.rows;
+
+        const horizontal = cx < 0.33 ? "left" : cx > 0.67 ? "right" : "center";
+        const vertical = cy < 0.33 ? "top" : cy > 0.67 ? "bottom" : "middle";
+
+        return `${vertical}-${horizontal}`;
+    }
 
     boxes.forEach(box => {
         const parent = getBox(box.parentId);
         const color = colorInfo(box);
 
-        text += `BOX ${box.number}: ${box.label || "Untitled"}
-Description: ${box.description || ""}
-Parent: ${parent ? `Box ${parent.number} (${parent.label || "Untitled"})` : "None"}
-Color Role: ${color.role}
-Color Code: ${color.hex}
-Color CSS: ${color.cssColor}
-PC Layout: ${layoutText(box, "pc")}
-Tablet Layout: ${layoutText(box, "tablet")}
-Mobile Layout: ${layoutText(box, "mobile")}
+        lines.push(`BOX ${box.number}: ${box.label || "Untitled"}`);
+        lines.push(`Purpose: ${box.description || "No description provided."}`);
+        lines.push(`Parent: ${parent ? `Box ${parent.number} (${parent.label || "Untitled"})` : "None"}`);
+        lines.push(`Color Role: ${color.role}`);
+        lines.push(`Suggested Color: ${color.hex}`);
+        lines.push(`Color CSS Reference: ${color.cssColor}`);
+        lines.push(``);
+        lines.push(`IMPORTANT: The following layout descriptions are approximate visual guidance.`);
+        lines.push(`Use them to reproduce the intended composition, not as fixed dimensions.`);
+        lines.push(``);
 
-`;
+        ["pc", "tablet", "mobile"].forEach(mode => {
+            const label = mode === "pc" ? "PC / Desktop" : mode.charAt(0).toUpperCase() + mode.slice(1);
+            const layout = getEffectiveLayout(box, mode, {});
+            const hasOverride = mode !== "pc" && box.responsive && box.responsive[mode];
+
+            lines.push(`${label}:`);
+            lines.push(`  Approximate position: ${qualitativePosition(box, mode)}`);
+            lines.push(`  Approximate width: ${qualitativeWidth(box, mode)}`);
+            lines.push(`  Approximate relative width: ${Math.round(layout.width / DEVICE_CONFIG[mode].columns * 100)}% of planner area`);
+            lines.push(`  Approximate relative height: ${Math.round(layout.height / DEVICE_CONFIG[mode].rows * 100)}% of planner area`);
+
+            if (hasOverride) {
+                lines.push(`  Responsive intent: Custom override — intentionally different from the base composition.`);
+            } else if (mode === "pc") {
+                lines.push(`  Responsive intent: Base composition.`);
+            } else {
+                lines.push(`  Responsive intent: No custom override — adapt naturally from the base composition.`);
+            }
+
+            lines.push(``);
+        });
+
+        lines.push(`Layout relationship guidance:`);
+        lines.push(`  Preserve this element's relationship to neighboring and parent elements.`);
+        lines.push(`  Use flexible CSS layout rather than fixed planner coordinates.`);
+        lines.push(``);
+        lines.push(`----------------------------------------`);
+        lines.push(``);
     });
 
-    return text.trim();
+    lines.push(`IMPLEMENTATION GUIDANCE`);
+    lines.push(`======================`);
+    lines.push(``);
+    lines.push(`Use semantic HTML where appropriate.`);
+    lines.push(`Use CSS Grid and/or Flexbox for layout.`);
+    lines.push(`Use responsive units such as %, fr, rem, vw, and clamp() where appropriate.`);
+    lines.push(`Use media queries or container queries when layout relationships need to change.`);
+    lines.push(`Do not use the planner's grid cells as website dimensions.`);
+    lines.push(`Do not reproduce the planner's 24×20, 18×24, or 12×28 grids in the final website.`);
+    lines.push(`Do not assume PC, tablet, and mobile must have identical proportions.`);
+    lines.push(`The planner represents DESIGN INTENT, not a pixel-perfect specification.`);
+    lines.push(`When the available width changes, the implementation should continue to look intentional`);
+    lines.push(`rather than simply shrinking everything proportionally.`);
+    lines.push(``);
+
+    return lines.join("\n");
 }
 
 document.getElementById("copyButton")
