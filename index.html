@@ -1,0 +1,2712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Layout Planner</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    --hue: 210;
+    --primary: hsl(var(--hue), 25%, 92%);
+    --secondary: hsl(var(--hue), 35%, 78%);
+    --accent: hsl(var(--hue), 75%, 52%);
+    --border: hsl(var(--hue), 20%, 55%);
+    --text: #17202a;
+    --muted: #66727f;
+    --sidebar-width: 270px;
+    --topbar-height: 58px;
+    --bottom-bar-height: 58px;
+    --cell-size: 20px;
+}
+
+html,
+body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+    color: var(--text);
+    background: #f5f6f7;
+}
+
+button,
+input,
+textarea,
+select {
+    font: inherit;
+}
+
+/* =========================
+   APP LAYOUT
+========================= */
+
+.app {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr;
+    grid-template-rows: var(--topbar-height) 1fr var(--bottom-bar-height);
+    width: 100vw;
+    height: 100vh;
+}
+
+/* =========================
+   TOP BAR
+========================= */
+
+.topbar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    background: white;
+    border-bottom: 1px solid #d7dadd;
+    z-index: 20;
+}
+
+.brand {
+    font-weight: 700;
+    font-size: 17px;
+}
+
+.project-name {
+    border: 1px solid transparent;
+    border-radius: 5px;
+    padding: 7px 9px;
+    font-size: 16px;
+    font-weight: 600;
+    width: 320px;
+}
+
+.project-name:hover,
+.project-name:focus {
+    border-color: #c8ccd0;
+    outline: none;
+}
+
+.primary-button {
+    border: none;
+    border-radius: 6px;
+    padding: 9px 14px;
+    background: var(--accent);
+    color: white;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.primary-button:hover {
+    filter: brightness(0.95);
+}
+
+/* =========================
+   SIDEBAR
+========================= */
+
+.sidebar {
+    grid-column: 1;
+    grid-row: 2 / 4;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border-right: 1px solid #d7dadd;
+    overflow: hidden;
+    z-index: 15;
+}
+
+.sidebar-header {
+    padding: 16px;
+    border-bottom: 1px solid #e2e4e6;
+}
+
+.add-box-button {
+    width: 100%;
+    border: 1px solid #c8ccd0;
+    border-radius: 6px;
+    padding: 10px;
+    background: white;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.add-box-button:hover,
+.add-box-button.active {
+    background: #f0f3f5;
+    border-color: var(--accent);
+}
+
+.box-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.box-list-empty {
+    padding: 18px 10px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.box-list-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 9px 10px;
+    margin-bottom: 3px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    color: var(--text);
+}
+
+.box-list-item:hover {
+    background: #f1f3f4;
+}
+
+.box-list-item.selected {
+    background: hsl(var(--hue), 65%, 93%);
+}
+
+.box-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex: 0 0 auto;
+    border: 1px solid rgba(0,0,0,0.15);
+}
+
+.box-list-number {
+    font-size: 11px;
+    color: var(--muted);
+    min-width: 38px;
+}
+
+.box-list-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* =========================
+   CANVAS
+========================= */
+
+.canvas-area {
+    grid-column: 2;
+    grid-row: 2;
+    position: relative;
+    overflow: auto;
+    background: #eef0f2;
+}
+
+.canvas {
+    position: relative;
+    width: 480px;
+    min-width: 480px;
+    height: 400px;
+    min-height: 400px;
+
+    background-color: white;
+
+    background-image:
+        linear-gradient(to right, #dfe3e7 1px, transparent 1px),
+        linear-gradient(to bottom, #dfe3e7 1px, transparent 1px);
+
+    background-size:
+        var(--cell-size) var(--cell-size);
+
+    box-shadow: 0 0 0 1px #cfd4d8;
+    margin: 40px;
+}
+
+.canvas.add-mode {
+    cursor: crosshair;
+}
+
+/* =========================
+   BOXES
+========================= */
+
+.layout-box {
+    position: absolute;
+    min-width: 20px;
+    min-height: 20px;
+    border: 2px solid var(--border);
+    border-radius: 3px;
+    cursor: grab;
+    user-select: none;
+    overflow: visible;
+    transition: box-shadow 0.08s ease;
+}
+
+.layout-box:active {
+    cursor: grabbing;
+}
+
+.layout-box.selected {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    z-index: 100;
+}
+
+.layout-box.parent-target {
+    outline: 3px dashed var(--accent);
+    outline-offset: 2px;
+}
+
+.box-content {
+    position: absolute;
+    inset: 0;
+    padding: 5px;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.box-title {
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.box-description {
+    margin-top: 3px;
+    font-size: 9px;
+    line-height: 1.2;
+    opacity: 0.75;
+    overflow: hidden;
+}
+
+.resize-handle {
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    background: white;
+    border: 2px solid var(--accent);
+    border-radius: 2px;
+    z-index: 200;
+}
+
+.resize-handle.br {
+    right: -5px;
+    bottom: -5px;
+    cursor: nwse-resize;
+}
+
+.resize-handle.bl {
+    left: -5px;
+    bottom: -5px;
+    cursor: nesw-resize;
+}
+
+.resize-handle.tr {
+    right: -5px;
+    top: -5px;
+    cursor: nesw-resize;
+}
+
+.resize-handle.tl {
+    left: -5px;
+    top: -5px;
+    cursor: nwse-resize;
+}
+
+/* =========================
+   PROPERTY PANEL
+========================= */
+
+.property-panel {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 250px;
+    background: white;
+    border: 1px solid #d4d8dc;
+    border-radius: 8px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+    padding: 14px;
+    z-index: 300;
+}
+
+.property-panel.hidden {
+    display: none;
+}
+
+.panel-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.field {
+    margin-bottom: 11px;
+}
+
+.field label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+}
+
+.field input,
+.field textarea,
+.field select {
+    width: 100%;
+    border: 1px solid #cfd4d8;
+    border-radius: 5px;
+    padding: 7px;
+    background: white;
+    color: var(--text);
+}
+
+.field textarea {
+    min-height: 58px;
+    resize: vertical;
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+    outline: 2px solid hsl(var(--hue), 70%, 85%);
+    border-color: var(--accent);
+}
+
+.position-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+}
+
+.size-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+}
+
+.readonly-value {
+    background: #f4f5f6 !important;
+    color: var(--muted) !important;
+}
+
+/* =========================
+   COLOR
+========================= */
+
+.color-role {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+}
+
+.role-option {
+    border: 1px solid #d1d5d8;
+    border-radius: 5px;
+    padding: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    background: white;
+}
+
+.role-option:hover {
+    background: #f4f5f6;
+}
+
+.role-option.active {
+    border-color: var(--accent);
+    background: hsl(var(--hue), 70%, 95%);
+}
+
+.custom-color-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 7px;
+}
+
+.custom-color-row input {
+    width: 45px;
+    height: 30px;
+    padding: 2px;
+}
+
+/* =========================
+   BOTTOM BAR
+========================= */
+
+.bottom-bar {
+    grid-column: 2;
+    grid-row: 3;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 0 18px;
+    background: white;
+    border-top: 1px solid #d7dadd;
+    z-index: 20;
+}
+
+.temperature-label {
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.temperature-label.cool {
+    color: hsl(210, 55%, 42%);
+}
+
+.temperature-label.warm {
+    color: hsl(20, 65%, 45%);
+}
+
+.hue-slider {
+    width: 260px;
+    cursor: pointer;
+}
+
+.hue-preview {
+    width: 80px;
+    height: 18px;
+    border-radius: 9px;
+    background: linear-gradient(
+        to right,
+        hsl(210, 70%, 55%),
+        hsl(270, 70%, 55%),
+        hsl(330, 70%, 55%),
+        hsl(30, 70%, 55%),
+        hsl(60, 70%, 55%)
+    );
+}
+
+/* =========================
+   MODAL
+========================= */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(20, 25, 30, 0.35);
+    z-index: 1000;
+}
+
+.modal-overlay.hidden {
+    display: none;
+}
+
+.modal {
+    width: 360px;
+    max-width: calc(100vw - 30px);
+    background: white;
+    border-radius: 9px;
+    padding: 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+.modal h2 {
+    margin: 0 0 15px;
+    font-size: 18px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.secondary-button {
+    border: 1px solid #c9ced2;
+    border-radius: 6px;
+    padding: 8px 13px;
+    background: white;
+    cursor: pointer;
+}
+
+.secondary-button:hover {
+    background: #f3f4f5;
+}
+
+/* =========================
+   COPY MESSAGE
+========================= */
+
+.copy-message {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    padding: 9px 14px;
+    border-radius: 6px;
+    background: #20262c;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-5px);
+    transition: opacity 0.2s, transform 0.2s;
+    z-index: 2000;
+}
+
+.copy-message.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 800px) {
+    :root {
+        --sidebar-width: 210px;
+    }
+
+    .project-name {
+        width: 200px;
+    }
+
+    .property-panel {
+        width: 220px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- =========================
+         TOP BAR
+    ========================== -->
+
+    <header class="topbar">
+
+        <div class="brand">
+            Layout Planner
+        </div>
+
+        <input
+            id="projectName"
+            class="project-name"
+            value="My Website Layout"
+            aria-label="Project name"
+        >
+
+        <button
+            id="copyButton"
+            class="primary-button"
+        >
+            Copy to Clipboard
+        </button>
+
+    </header>
+
+
+    <!-- =========================
+         SIDEBAR
+    ========================== -->
+
+    <aside class="sidebar">
+
+        <div class="sidebar-header">
+
+            <button
+                id="addBoxButton"
+                class="add-box-button"
+            >
+                + Add Box
+            </button>
+
+        </div>
+
+        <div id="boxList" class="box-list">
+
+            <div class="box-list-empty">
+                No boxes yet.<br>
+                Click <strong>Add Box</strong> to begin.
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =========================
+         CANVAS
+    ========================== -->
+
+    <main id="canvasArea" class="canvas-area">
+
+        <div id="canvas" class="canvas"></div>
+
+        <!-- PROPERTY PANEL -->
+
+        <section
+            id="propertyPanel"
+            class="property-panel hidden"
+        >
+
+            <div class="panel-title">
+                Box Properties
+            </div>
+
+            <div class="field">
+                <label>Label</label>
+                <input id="labelInput" type="text">
+            </div>
+
+            <div class="field">
+                <label>Description</label>
+                <textarea id="descriptionInput"></textarea>
+            </div>
+
+            <div class="field">
+
+                <label>Position</label>
+
+                <div class="position-grid">
+
+                    <input
+                        id="xInput"
+                        class="readonly-value"
+                        readonly
+                        placeholder="Column"
+                    >
+
+                    <input
+                        id="yInput"
+                        class="readonly-value"
+                        readonly
+                        placeholder="Row"
+                    >
+
+                </div>
+
+            </div>
+
+            <div class="field">
+
+                <label>Size</label>
+
+                <div class="size-grid">
+
+                    <input
+                        id="widthInput"
+                        class="readonly-value"
+                        readonly
+                        placeholder="Width"
+                    >
+
+                    <input
+                        id="heightInput"
+                        class="readonly-value"
+                        readonly
+                        placeholder="Height"
+                    >
+
+                </div>
+
+            </div>
+
+            <div class="field">
+
+                <label>Parent</label>
+
+                <input
+                    id="parentInput"
+                    class="readonly-value"
+                    readonly
+                >
+
+            </div>
+
+            <div class="field">
+
+                <label>Color Role</label>
+
+                <div id="colorRole" class="color-role">
+
+                    <button class="role-option" data-role="primary">
+                        Primary
+                    </button>
+
+                    <button class="role-option" data-role="secondary">
+                        Secondary
+                    </button>
+
+                    <button class="role-option" data-role="accent">
+                        Accent
+                    </button>
+
+                    <button class="role-option" data-role="custom">
+                        Custom
+                    </button>
+
+                </div>
+
+                <div
+                    id="customColorRow"
+                    class="custom-color-row"
+                    style="display:none;"
+                >
+
+                    <span>Custom</span>
+
+                    <input
+                        id="customColorInput"
+                        type="color"
+                        value="#8aa8c8"
+                    >
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- =========================
+         BOTTOM BAR
+    ========================== -->
+
+    <footer class="bottom-bar">
+
+        <span class="temperature-label cool">
+            Cool
+        </span>
+
+        <input
+            id="hueSlider"
+            class="hue-slider"
+            type="range"
+            min="0"
+            max="100"
+            value="0"
+        >
+
+        <span class="temperature-label warm">
+            Warm
+        </span>
+
+        <div class="hue-preview"></div>
+
+    </footer>
+
+</div>
+
+
+<!-- =========================
+     CREATE BOX MODAL
+========================== -->
+
+<div
+    id="modalOverlay"
+    class="modal-overlay hidden"
+>
+
+    <div class="modal">
+
+        <h2>Create Box</h2>
+
+        <div class="field">
+
+            <label>Label</label>
+
+            <input
+                id="modalLabel"
+                type="text"
+                placeholder="Example: Header"
+            >
+
+        </div>
+
+        <div class="field">
+
+            <label>Description</label>
+
+            <textarea
+                id="modalDescription"
+                placeholder="Example: Top navigation bar"
+            ></textarea>
+
+        </div>
+
+        <div class="modal-actions">
+
+            <button
+                id="cancelModal"
+                class="secondary-button"
+            >
+                Cancel
+            </button>
+
+            <button
+                id="createModal"
+                class="primary-button"
+            >
+                Create Box
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<div
+    id="copyMessage"
+    class="copy-message"
+>
+    Copied!
+</div>
+
+
+<script>
+
+/* =========================================================
+   CONFIGURATION
+========================================================= */
+
+const GRID_COLUMNS = 24;
+const GRID_ROWS = 20;
+const CELL_SIZE = 20;
+const MAX_NESTING_DEPTH = 5;
+
+const canvas = document.getElementById("canvas");
+const addBoxButton = document.getElementById("addBoxButton");
+const boxList = document.getElementById("boxList");
+const propertyPanel = document.getElementById("propertyPanel");
+
+const projectNameInput =
+    document.getElementById("projectName");
+
+const hueSlider =
+    document.getElementById("hueSlider");
+
+let boxes = [];
+let selectedBoxId = null;
+let nextBoxNumber = 1;
+
+let addMode = false;
+
+let pendingBox = null;
+
+let dragState = null;
+let resizeState = null;
+
+
+/* =========================================================
+   COLORS
+========================================================= */
+
+function updateColorSystem() {
+
+    const sliderValue =
+        Number(hueSlider.value);
+
+    /*
+        0 = cool blue
+        50 = purple
+        100 = warm yellow/orange
+    */
+
+    const hue =
+        210 + sliderValue * 1.5;
+
+    document.documentElement.style
+        .setProperty("--hue", hue);
+
+    renderBoxes();
+    renderSidebar();
+
+    if (selectedBoxId) {
+        updatePropertyPanel();
+    }
+}
+
+
+function getBoxColor(box) {
+
+    if (box.colorRole === "custom") {
+        return box.customColor;
+    }
+
+    const hue =
+        210 + Number(hueSlider.value) * 1.5;
+
+    if (box.colorRole === "primary") {
+        return `hsl(${hue}, 30%, 88%)`;
+    }
+
+    if (box.colorRole === "secondary") {
+        return `hsl(${hue}, 45%, 76%)`;
+    }
+
+    if (box.colorRole === "accent") {
+        return `hsl(${hue}, 70%, 58%)`;
+    }
+
+    return `hsl(${hue}, 30%, 88%)`;
+}
+
+
+function getTextColor(box) {
+
+    if (box.colorRole === "accent") {
+        return "#ffffff";
+    }
+
+    if (box.colorRole === "custom") {
+        return getContrastColor(box.customColor);
+    }
+
+    return "#17202a";
+}
+
+
+function getContrastColor(hex) {
+
+    const clean =
+        hex.replace("#", "");
+
+    const r =
+        parseInt(clean.substring(0, 2), 16);
+
+    const g =
+        parseInt(clean.substring(2, 4), 16);
+
+    const b =
+        parseInt(clean.substring(4, 6), 16);
+
+    const brightness =
+        (r * 299 + g * 587 + b * 114) / 1000;
+
+    return brightness > 150
+        ? "#17202a"
+        : "#ffffff";
+}
+
+
+hueSlider.addEventListener(
+    "input",
+    updateColorSystem
+);
+
+
+/* =========================================================
+   CANVAS SETUP
+========================================================= */
+
+canvas.style.width =
+    `${GRID_COLUMNS * CELL_SIZE}px`;
+
+canvas.style.height =
+    `${GRID_ROWS * CELL_SIZE}px`;
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function getBox(id) {
+    return boxes.find(box => box.id === id);
+}
+
+
+function getChildren(parentId) {
+    return boxes.filter(
+        box => box.parentId === parentId
+    );
+}
+
+
+function getDepth(box) {
+
+    let depth = 1;
+    let current = box;
+
+    while (current.parentId) {
+
+        const parent =
+            getBox(current.parentId);
+
+        if (!parent) break;
+
+        depth++;
+        current = parent;
+    }
+
+    return depth;
+}
+
+
+function getBoxName(box) {
+
+    if (!box) {
+        return "None";
+    }
+
+    return `${box.number} (${box.label || "Untitled"})`;
+}
+
+
+function rectsOverlap(a, b) {
+
+    return !(
+        a.x + a.width <= b.x ||
+        b.x + b.width <= a.x ||
+        a.y + a.height <= b.y ||
+        b.y + b.height <= a.y
+    );
+}
+
+
+function isInside(child, parent) {
+
+    return (
+        child.x >= parent.x &&
+        child.y >= parent.y &&
+        child.x + child.width <=
+            parent.x + parent.width &&
+        child.y + child.height <=
+            parent.y + parent.height
+    );
+}
+
+
+function getAbsolutePosition(box) {
+
+    let x = box.x;
+    let y = box.y;
+
+    let parent =
+        getBox(box.parentId);
+
+    while (parent) {
+
+        x += parent.x;
+        y += parent.y;
+
+        parent =
+            getBox(parent.parentId);
+    }
+
+    return { x, y };
+}
+
+
+function snap(value) {
+
+    return Math.round(value / CELL_SIZE);
+}
+
+
+function clamp(value, min, max) {
+
+    return Math.max(
+        min,
+        Math.min(max, value)
+    );
+}
+
+
+/* =========================================================
+   COLLISION DETECTION
+========================================================= */
+
+function canPlaceBox(
+    box,
+    newX,
+    newY,
+    newWidth = box.width,
+    newHeight = box.height,
+    newParentId = box.parentId
+) {
+
+    const test = {
+        x: newX,
+        y: newY,
+        width: newWidth,
+        height: newHeight
+    };
+
+    /*
+       Test against sibling boxes.
+    */
+
+    const siblings =
+        boxes.filter(other =>
+            other.id !== box.id &&
+            other.parentId === newParentId
+        );
+
+    for (const sibling of siblings) {
+
+        if (rectsOverlap(test, sibling)) {
+            return false;
+        }
+    }
+
+    /*
+       Top-level boxes must remain
+       inside the canvas.
+    */
+
+    if (!newParentId) {
+
+        if (
+            newX < 0 ||
+            newY < 0 ||
+            newX + newWidth > GRID_COLUMNS ||
+            newY + newHeight > GRID_ROWS
+        ) {
+            return false;
+        }
+
+    } else {
+
+        const parent =
+            getBox(newParentId);
+
+        if (!parent) {
+            return false;
+        }
+
+        if (!isInside(test, parent)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
+/* =========================================================
+   RENDER BOXES
+========================================================= */
+
+function renderBoxes() {
+
+    canvas
+        .querySelectorAll(".layout-box")
+        .forEach(element =>
+            element.remove()
+        );
+
+    /*
+       Render parents before children.
+    */
+
+    const sorted =
+        [...boxes].sort(
+            (a, b) =>
+                getDepth(a) - getDepth(b)
+        );
+
+    sorted.forEach(box => {
+
+        const element =
+            document.createElement("div");
+
+        element.className =
+            "layout-box";
+
+        element.dataset.id =
+            box.id;
+
+        element.style.left =
+            `${box.x * CELL_SIZE}px`;
+
+        element.style.top =
+            `${box.y * CELL_SIZE}px`;
+
+        element.style.width =
+            `${box.width * CELL_SIZE}px`;
+
+        element.style.height =
+            `${box.height * CELL_SIZE}px`;
+
+        const color =
+            getBoxColor(box);
+
+        element.style.background =
+            color;
+
+        element.style.borderColor =
+            box.colorRole === "accent"
+                ? color
+                : "rgba(50,60,70,0.55)";
+
+        element.style.color =
+            getTextColor(box);
+
+        if (box.id === selectedBoxId) {
+            element.classList.add("selected");
+        }
+
+        element.innerHTML = `
+
+            <div class="box-content">
+
+                <div class="box-title">
+                    ${escapeHTML(
+                        box.label ||
+                        `Box ${box.number}`
+                    )}
+                </div>
+
+                <div class="box-description">
+                    ${escapeHTML(
+                        box.description || ""
+                    )}
+                </div>
+
+            </div>
+
+        `;
+
+        if (box.id === selectedBoxId) {
+
+            ["tl", "tr", "bl", "br"]
+                .forEach(position => {
+
+                    const handle =
+                        document.createElement("div");
+
+                    handle.className =
+                        `resize-handle ${position}`;
+
+                    handle.dataset.handle =
+                        position;
+
+                    element.appendChild(handle);
+                });
+        }
+
+        element.addEventListener(
+            "pointerdown",
+            handleBoxPointerDown
+        );
+
+        canvas.appendChild(element);
+    });
+}
+
+
+function escapeHTML(value) {
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+function renderSidebar() {
+
+    boxList.innerHTML = "";
+
+    if (boxes.length === 0) {
+
+        boxList.innerHTML = `
+            <div class="box-list-empty">
+                No boxes yet.<br>
+                Click <strong>Add Box</strong>
+                to begin.
+            </div>
+        `;
+
+        return;
+    }
+
+    boxes.forEach(box => {
+
+        const button =
+            document.createElement("button");
+
+        button.className =
+            "box-list-item";
+
+        if (box.id === selectedBoxId) {
+            button.classList.add("selected");
+        }
+
+        const color =
+            getBoxColor(box);
+
+        button.innerHTML = `
+
+            <span
+                class="box-color"
+                style="background:${color}"
+            ></span>
+
+            <span class="box-list-number">
+                Box ${box.number}
+            </span>
+
+            <span class="box-list-label">
+                ${escapeHTML(
+                    box.label || "Untitled"
+                )}
+            </span>
+
+        `;
+
+        button.addEventListener(
+            "click",
+            () => selectBox(box.id)
+        );
+
+        boxList.appendChild(button);
+    });
+}
+
+
+/* =========================================================
+   SELECTION
+========================================================= */
+
+function selectBox(id) {
+
+    selectedBoxId = id;
+
+    addMode = false;
+
+    addBoxButton.classList.remove("active");
+    canvas.classList.remove("add-mode");
+
+    renderBoxes();
+    renderSidebar();
+    updatePropertyPanel();
+}
+
+
+function updatePropertyPanel() {
+
+    const box =
+        getBox(selectedBoxId);
+
+    if (!box) {
+
+        propertyPanel.classList.add("hidden");
+
+        return;
+    }
+
+    propertyPanel.classList.remove("hidden");
+
+    document.getElementById("labelInput").value =
+        box.label;
+
+    document.getElementById("descriptionInput").value =
+        box.description;
+
+    document.getElementById("xInput").value =
+        `Column ${box.x + 1}`;
+
+    document.getElementById("yInput").value =
+        `Row ${box.y + 1}`;
+
+    document.getElementById("widthInput").value =
+        `${box.width} columns`;
+
+    document.getElementById("heightInput").value =
+        `${box.height} rows`;
+
+    const parent =
+        getBox(box.parentId);
+
+    document.getElementById("parentInput").value =
+        parent
+            ? `Box ${parent.number} (${parent.label})`
+            : "None";
+
+    document
+        .querySelectorAll(".role-option")
+        .forEach(button => {
+
+            button.classList.toggle(
+                "active",
+                button.dataset.role ===
+                    box.colorRole
+            );
+        });
+
+    document.getElementById(
+        "customColorRow"
+    ).style.display =
+        box.colorRole === "custom"
+            ? "flex"
+            : "none";
+
+    document.getElementById(
+        "customColorInput"
+    ).value =
+        box.customColor || "#8aa8c8";
+}
+
+
+/* =========================================================
+   PROPERTY EDITING
+========================================================= */
+
+document
+    .getElementById("labelInput")
+    .addEventListener("input", event => {
+
+        const box =
+            getBox(selectedBoxId);
+
+        if (!box) return;
+
+        box.label =
+            event.target.value;
+
+        renderBoxes();
+        renderSidebar();
+    });
+
+
+document
+    .getElementById("descriptionInput")
+    .addEventListener("input", event => {
+
+        const box =
+            getBox(selectedBoxId);
+
+        if (!box) return;
+
+        box.description =
+            event.target.value;
+
+        renderBoxes();
+    });
+
+
+document
+    .querySelectorAll(".role-option")
+    .forEach(button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                const box =
+                    getBox(selectedBoxId);
+
+                if (!box) return;
+
+                box.colorRole =
+                    button.dataset.role;
+
+                renderBoxes();
+                renderSidebar();
+                updatePropertyPanel();
+            }
+        );
+    });
+
+
+document
+    .getElementById("customColorInput")
+    .addEventListener("input", event => {
+
+        const box =
+            getBox(selectedBoxId);
+
+        if (!box) return;
+
+        box.customColor =
+            event.target.value;
+
+        box.colorRole =
+            "custom";
+
+        renderBoxes();
+        renderSidebar();
+    });
+
+
+/* =========================================================
+   ADD BOX MODE
+========================================================= */
+
+addBoxButton.addEventListener(
+    "click",
+    () => {
+
+        addMode =
+            !addMode;
+
+        addBoxButton.classList.toggle(
+            "active",
+            addMode
+        );
+
+        canvas.classList.toggle(
+            "add-mode",
+            addMode
+        );
+    }
+);
+
+
+/* =========================================================
+   CREATE BOX BY DRAGGING
+========================================================= */
+
+let createStart = null;
+let creating = false;
+
+canvas.addEventListener(
+    "pointerdown",
+    event => {
+
+        if (!addMode) return;
+
+        if (
+            event.target !== canvas
+        ) {
+            return;
+        }
+
+        const rect =
+            canvas.getBoundingClientRect();
+
+        const x =
+            clamp(
+                snap(
+                    event.clientX -
+                    rect.left
+                ),
+                0,
+                GRID_COLUMNS - 1
+            );
+
+        const y =
+            clamp(
+                snap(
+                    event.clientY -
+                    rect.top
+                ),
+                0,
+                GRID_ROWS - 1
+            );
+
+        createStart = { x, y };
+
+        creating = true;
+
+        canvas.setPointerCapture(
+            event.pointerId
+        );
+    }
+);
+
+
+canvas.addEventListener(
+    "pointermove",
+    event => {
+
+        if (!creating) return;
+
+        /*
+           This bare-bones version creates
+           a minimum 1x1 box and lets the
+           modal define it afterward.
+        */
+    }
+);
+
+
+canvas.addEventListener(
+    "pointerup",
+    event => {
+
+        if (!creating) return;
+
+        creating = false;
+
+        canvas.releasePointerCapture(
+            event.pointerId
+        );
+
+        const start =
+            createStart;
+
+        createStart = null;
+
+        /*
+           Determine whether the user dragged.
+           If not, create a default 4x2 box.
+        */
+
+        const rect =
+            canvas.getBoundingClientRect();
+
+        const endX =
+            clamp(
+                snap(
+                    event.clientX -
+                    rect.left
+                ),
+                0,
+                GRID_COLUMNS - 1
+            );
+
+        const endY =
+            clamp(
+                snap(
+                    event.clientY -
+                    rect.top
+                ),
+                0,
+                GRID_ROWS - 1
+            );
+
+        let x =
+            Math.min(start.x, endX);
+
+        let y =
+            Math.min(start.y, endY);
+
+        let width =
+            Math.abs(endX - start.x) + 1;
+
+        let height =
+            Math.abs(endY - start.y) + 1;
+
+        /*
+           Minimum practical size.
+        */
+
+        width =
+            Math.max(1, width);
+
+        height =
+            Math.max(1, height);
+
+        /*
+           Make sure the default box
+           remains on the canvas.
+        */
+
+        width =
+            Math.min(
+                width,
+                GRID_COLUMNS - x
+            );
+
+        height =
+            Math.min(
+                height,
+                GRID_ROWS - y
+            );
+
+        pendingBox = {
+            x,
+            y,
+            width,
+            height
+        };
+
+        openCreateModal();
+    }
+);
+
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+function openCreateModal() {
+
+    document.getElementById(
+        "modalLabel"
+    ).value = "";
+
+    document.getElementById(
+        "modalDescription"
+    ).value = "";
+
+    document
+        .getElementById("modalOverlay")
+        .classList.remove("hidden");
+
+    setTimeout(() => {
+
+        document
+            .getElementById("modalLabel")
+            .focus();
+
+    }, 50);
+}
+
+
+function closeModal() {
+
+    document
+        .getElementById("modalOverlay")
+        .classList.add("hidden");
+
+    pendingBox = null;
+}
+
+
+document
+    .getElementById("cancelModal")
+    .addEventListener(
+        "click",
+        closeModal
+    );
+
+
+document
+    .getElementById("createModal")
+    .addEventListener(
+        "click",
+        () => {
+
+            if (!pendingBox) return;
+
+            const label =
+                document.getElementById(
+                    "modalLabel"
+                ).value.trim();
+
+            const description =
+                document.getElementById(
+                    "modalDescription"
+                ).value.trim();
+
+            const newBox = {
+
+                id:
+                    crypto.randomUUID(),
+
+                number:
+                    nextBoxNumber++,
+
+                label:
+                    label ||
+                    `Box ${nextBoxNumber - 1}`,
+
+                description,
+
+                x:
+                    pendingBox.x,
+
+                y:
+                    pendingBox.y,
+
+                width:
+                    pendingBox.width,
+
+                height:
+                    pendingBox.height,
+
+                parentId:
+                    null,
+
+                colorRole:
+                    "primary",
+
+                customColor:
+                    "#8aa8c8"
+            };
+
+            boxes.push(newBox);
+
+            closeModal();
+
+            selectBox(newBox.id);
+        }
+    );
+
+
+document
+    .getElementById("modalOverlay")
+    .addEventListener(
+        "pointerdown",
+        event => {
+
+            if (
+                event.target ===
+                event.currentTarget
+            ) {
+                closeModal();
+            }
+        }
+    );
+
+
+/* =========================================================
+   DRAGGING / RESIZING
+========================================================= */
+
+function handleBoxPointerDown(event) {
+
+    event.stopPropagation();
+
+    const element =
+        event.currentTarget;
+
+    const id =
+        element.dataset.id;
+
+    const box =
+        getBox(id);
+
+    if (!box) return;
+
+    selectBox(id);
+
+    /*
+       Resize handle
+    */
+
+    const handle =
+        event.target.dataset.handle;
+
+    if (handle) {
+
+        startResize(
+            event,
+            box,
+            handle
+        );
+
+        return;
+    }
+
+    /*
+       Otherwise start dragging.
+    */
+
+    startDrag(event, box);
+}
+
+
+function startDrag(event, box) {
+
+    const rect =
+        canvas.getBoundingClientRect();
+
+    dragState = {
+
+        box,
+
+        startMouseX:
+            event.clientX,
+
+        startMouseY:
+            event.clientY,
+
+        startX:
+            box.x,
+
+        startY:
+            box.y,
+
+        pointerId:
+            event.pointerId
+    };
+
+    event.currentTarget.setPointerCapture(
+        event.pointerId
+    );
+
+    event.currentTarget.addEventListener(
+        "pointermove",
+        handleDragMove
+    );
+
+    event.currentTarget.addEventListener(
+        "pointerup",
+        handleDragEnd,
+        { once: true }
+    );
+}
+
+
+function handleDragMove(event) {
+
+    if (!dragState) return;
+
+    const box =
+        dragState.box;
+
+    const dx =
+        snap(
+            event.clientX -
+            dragState.startMouseX
+        );
+
+    const dy =
+        snap(
+            event.clientY -
+            dragState.startMouseY
+        );
+
+    const newX =
+        dragState.startX + dx;
+
+    const newY =
+        dragState.startY + dy;
+
+    /*
+       Try normal movement.
+    */
+
+    if (
+        canPlaceBox(
+            box,
+            newX,
+            newY,
+            box.width,
+            box.height,
+            box.parentId
+        )
+    ) {
+
+        box.x = newX;
+        box.y = newY;
+
+        renderBoxes();
+
+        return;
+    }
+
+    /*
+       Check for a possible parent
+       when the box is moved over another box.
+    */
+
+    const target =
+        findParentAtPosition(
+            box,
+            newX,
+            newY
+        );
+
+    highlightParent(target);
+}
+
+
+function handleDragEnd(event) {
+
+    if (!dragState) return;
+
+    const box =
+        dragState.box;
+
+    const target =
+        findParentAtPosition(
+            box,
+            box.x,
+            box.y
+        );
+
+    /*
+       If the current position is inside
+       another box, try nesting.
+    */
+
+    if (
+        target &&
+        target.id !== box.id
+    ) {
+
+        if (
+            getDepth(target) <
+            MAX_NESTING_DEPTH
+        ) {
+
+            const absolute =
+                getAbsolutePosition(box);
+
+            const parentAbsolute =
+                getAbsolutePosition(target);
+
+            const relativeX =
+                absolute.x -
+                parentAbsolute.x;
+
+            const relativeY =
+                absolute.y -
+                parentAbsolute.y;
+
+            const test = {
+
+                x: relativeX,
+                y: relativeY,
+                width: box.width,
+                height: box.height
+
+            };
+
+            if (
+                isInside(
+                    test,
+                    target
+                )
+            ) {
+
+                box.parentId =
+                    target.id;
+
+                box.x =
+                    relativeX;
+
+                box.y =
+                    relativeY;
+            }
+        }
+    }
+
+    clearParentHighlight();
+
+    dragState = null;
+
+    renderBoxes();
+    renderSidebar();
+    updatePropertyPanel();
+}
+
+
+function startResize(
+    event,
+    box,
+    handle
+) {
+
+    resizeState = {
+
+        box,
+
+        handle,
+
+        startMouseX:
+            event.clientX,
+
+        startMouseY:
+            event.clientY,
+
+        startX:
+            box.x,
+
+        startY:
+            box.y,
+
+        startWidth:
+            box.width,
+
+        startHeight:
+            box.height
+    };
+
+    event.currentTarget.setPointerCapture(
+        event.pointerId
+    );
+
+    event.currentTarget.addEventListener(
+        "pointermove",
+        handleResizeMove
+    );
+
+    event.currentTarget.addEventListener(
+        "pointerup",
+        handleResizeEnd,
+        { once: true }
+    );
+}
+
+
+function handleResizeMove(event) {
+
+    if (!resizeState) return;
+
+    const state =
+        resizeState;
+
+    const box =
+        state.box;
+
+    const dx =
+        snap(
+            event.clientX -
+            state.startMouseX
+        );
+
+    const dy =
+        snap(
+            event.clientY -
+            state.startMouseY
+        );
+
+    let x =
+        state.startX;
+
+    let y =
+        state.startY;
+
+    let width =
+        state.startWidth;
+
+    let height =
+        state.startHeight;
+
+    if (
+        state.handle.includes("r")
+    ) {
+        width =
+            state.startWidth + dx;
+    }
+
+    if (
+        state.handle.includes("l")
+    ) {
+
+        x =
+            state.startX + dx;
+
+        width =
+            state.startWidth - dx;
+    }
+
+    if (
+        state.handle.includes("b")
+    ) {
+        height =
+            state.startHeight + dy;
+    }
+
+    if (
+        state.handle.includes("t")
+    ) {
+
+        y =
+            state.startY + dy;
+
+        height =
+            state.startHeight - dy;
+    }
+
+    width =
+        Math.max(1, width);
+
+    height =
+        Math.max(1, height);
+
+    /*
+       Children must remain inside
+       a resized parent.
+    */
+
+    const children =
+        getChildren(box.id);
+
+    const childrenFit =
+        children.every(child => {
+
+            return (
+                child.x >= 0 &&
+                child.y >= 0 &&
+                child.x + child.width <= width &&
+                child.y + child.height <= height
+            );
+        });
+
+    if (!childrenFit) {
+        return;
+    }
+
+    if (
+        canPlaceBox(
+            box,
+            x,
+            y,
+            width,
+            height,
+            box.parentId
+        )
+    ) {
+
+        box.x = x;
+        box.y = y;
+        box.width = width;
+        box.height = height;
+
+        renderBoxes();
+        updatePropertyPanel();
+    }
+}
+
+
+function handleResizeEnd() {
+
+    resizeState = null;
+
+    renderBoxes();
+    renderSidebar();
+    updatePropertyPanel();
+}
+
+
+/* =========================================================
+   NESTING HELPERS
+========================================================= */
+
+function findParentAtPosition(
+    box,
+    x,
+    y
+) {
+
+    let best = null;
+
+    const test = {
+
+        x,
+        y,
+
+        width:
+            box.width,
+
+        height:
+            box.height
+    };
+
+    for (const candidate of boxes) {
+
+        if (
+            candidate.id === box.id
+        ) {
+            continue;
+        }
+
+        /*
+           Don't allow nesting inside
+           descendants.
+        */
+
+        if (
+            isDescendant(
+                candidate.id,
+                box.id
+            )
+        ) {
+            continue;
+        }
+
+        if (
+            isInside(
+                test,
+                candidate
+            )
+        ) {
+
+            if (
+                !best ||
+                getDepth(candidate) >
+                    getDepth(best)
+            ) {
+
+                best =
+                    candidate;
+            }
+        }
+    }
+
+    return best;
+}
+
+
+function isDescendant(
+    possibleChildId,
+    ancestorId
+) {
+
+    let current =
+        getBox(possibleChildId);
+
+    while (current) {
+
+        if (
+            current.parentId ===
+            ancestorId
+        ) {
+            return true;
+        }
+
+        current =
+            getBox(
+                current.parentId
+            );
+    }
+
+    return false;
+}
+
+
+function highlightParent(box) {
+
+    clearParentHighlight();
+
+    if (!box) return;
+
+    const element =
+        canvas.querySelector(
+            `[data-id="${box.id}"]`
+        );
+
+    if (element) {
+
+        element.classList.add(
+            "parent-target"
+        );
+    }
+}
+
+
+function clearParentHighlight() {
+
+    canvas
+        .querySelectorAll(
+            ".parent-target"
+        )
+        .forEach(element =>
+            element.classList.remove(
+                "parent-target"
+            )
+        );
+}
+
+
+/* =========================================================
+   DELETE
+========================================================= */
+
+document.addEventListener(
+    "keydown",
+    event => {
+
+        /*
+           Don't delete while typing.
+        */
+
+        const tag =
+            event.target.tagName;
+
+        if (
+            tag === "INPUT" ||
+            tag === "TEXTAREA"
+        ) {
+            return;
+        }
+
+        if (
+            event.key === "Delete" &&
+            selectedBoxId
+        ) {
+
+            deleteBox(
+                selectedBoxId
+            );
+        }
+
+        if (
+            event.key === "Escape"
+        ) {
+
+            addMode = false;
+
+            addBoxButton.classList.remove(
+                "active"
+            );
+
+            canvas.classList.remove(
+                "add-mode"
+            );
+
+            closeModal();
+        }
+    }
+);
+
+
+function deleteBox(id) {
+
+    /*
+       Remove the selected box and
+       all descendants.
+    */
+
+    const idsToDelete =
+        new Set([id]);
+
+    let changed = true;
+
+    while (changed) {
+
+        changed = false;
+
+        boxes.forEach(box => {
+
+            if (
+                box.parentId &&
+                idsToDelete.has(
+                    box.parentId
+                ) &&
+                !idsToDelete.has(box.id)
+            ) {
+
+                idsToDelete.add(
+                    box.id
+                );
+
+                changed = true;
+            }
+        });
+    }
+
+    boxes =
+        boxes.filter(
+            box =>
+                !idsToDelete.has(
+                    box.id
+                )
+        );
+
+    selectedBoxId = null;
+
+    renderBoxes();
+    renderSidebar();
+    updatePropertyPanel();
+}
+
+
+/* =========================================================
+   PROJECT NAME
+========================================================= */
+
+projectNameInput.addEventListener(
+    "input",
+    () => {}
+);
+
+
+/* =========================================================
+   EXPORT
+========================================================= */
+
+function getPositionDescription(box) {
+
+    const absolute =
+        getAbsolutePosition(box);
+
+    const startColumn =
+        absolute.x + 1;
+
+    const endColumn =
+        absolute.x + box.width;
+
+    const startRow =
+        absolute.y + 1;
+
+    const endRow =
+        absolute.y + box.height;
+
+    const columnText =
+        startColumn === endColumn
+            ? `${startColumn}`
+            : `${startColumn}-${endColumn}`;
+
+    const rowText =
+        startRow === endRow
+            ? `${startRow}`
+            : `${startRow}-${endRow}`;
+
+    return `Row ${rowText}, Columns ${columnText}`;
+}
+
+
+function generateExportText() {
+
+    let output =
+        `PROJECT: ${projectNameInput.value.trim() || "Untitled Project"}\n\n`;
+
+    boxes.forEach(box => {
+
+        const parent =
+            getBox(box.parentId);
+
+        const colorPercent =
+            box.colorRole === "primary"
+                ? "60%"
+                : box.colorRole === "secondary"
+                    ? "30%"
+                    : box.colorRole === "accent"
+                        ? "10%"
+                        : "Custom";
+
+        const colorName =
+            box.colorRole
+                .charAt(0)
+                .toUpperCase() +
+            box.colorRole.slice(1);
+
+        output +=
+`BOX ${box.number}: ${box.label || "Untitled"}
+Description: ${box.description || ""}
+Position: ${getPositionDescription(box)}
+Size: ${box.width} columns × ${box.height} rows
+Parent: ${
+    parent
+        ? `Box ${parent.number} (${parent.label})`
+        : "None"
+}
+Color: ${colorName}${
+    box.colorRole === "custom"
+        ? ` (${box.customColor})`
+        : ` (${colorPercent})`
+}
+
+`;
+    });
+
+    return output.trim();
+}
+
+
+document
+    .getElementById("copyButton")
+    .addEventListener(
+        "click",
+        async () => {
+
+            const text =
+                generateExportText();
+
+            try {
+
+                await navigator.clipboard.writeText(
+                    text
+                );
+
+            } catch (error) {
+
+                /*
+                   Fallback for environments
+                   where Clipboard API is blocked.
+                */
+
+                const textarea =
+                    document.createElement(
+                        "textarea"
+                    );
+
+                textarea.value =
+                    text;
+
+                document.body.appendChild(
+                    textarea
+                );
+
+                textarea.select();
+
+                document.execCommand(
+                    "copy"
+                );
+
+                textarea.remove();
+            }
+
+            showCopiedMessage();
+        }
+    );
+
+
+function showCopiedMessage() {
+
+    const message =
+        document.getElementById(
+            "copyMessage"
+        );
+
+    message.classList.add("show");
+
+    setTimeout(
+        () => {
+            message.classList.remove(
+                "show"
+            );
+        },
+        2000
+    );
+}
+
+
+/* =========================================================
+   CANVAS CLICK
+========================================================= */
+
+canvas.addEventListener(
+    "click",
+    event => {
+
+        if (
+            event.target === canvas &&
+            !addMode
+        ) {
+
+            selectedBoxId = null;
+
+            renderBoxes();
+            renderSidebar();
+            updatePropertyPanel();
+        }
+    }
+);
+
+
+/* =========================================================
+   INITIAL RENDER
+========================================================= */
+
+updateColorSystem();
+
+renderBoxes();
+
+renderSidebar();
+
+</script>
+
+</body>
+</html>
