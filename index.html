@@ -641,6 +641,14 @@ body {
     transform: translateY(0);
 }
 
+.copy-message.copy-success {
+    background: #246b3c;
+}
+
+.copy-message.copy-error {
+    background: #9b2c2c;
+}
+
 .grid-zoom-controls {
     display: flex;
     align-items: center;
@@ -3020,7 +3028,7 @@ function generateExportText() {
     lines.push(``);
 
     function qualitativeWidth(box, mode) {
-        const layout = getEffectiveLayout(box, mode, {});
+        const layout = getEffectiveGeometry(box, mode, {});
         const cols = DEVICE_CONFIG[mode].columns;
         const ratio = layout.width / cols;
         if (ratio >= 0.85) return "full-width";
@@ -3030,7 +3038,7 @@ function generateExportText() {
     }
 
     function qualitativePosition(box, mode) {
-        const layout = getEffectiveLayout(box, mode, {});
+        const layout = getEffectiveGeometry(box, mode, {});
         const cfg = DEVICE_CONFIG[mode];
         const cx = (layout.x + layout.width / 2) / cfg.columns;
         const cy = (layout.y + layout.height / 2) / cfg.rows;
@@ -3054,12 +3062,12 @@ function generateExportText() {
         lines.push(`Tablet: ${qualitativePosition(box, "tablet")}, ${qualitativeWidth(box, "tablet")} visual area.`);
         lines.push(`Mobile: ${qualitativePosition(box, "mobile")}, ${qualitativeWidth(box, "mobile")} visual area.`);
 
-        if (box.responsive && box.responsive.tablet) {
+        if (getResponsiveOverride(box, "tablet")) {
             lines.push(`Tablet responsive behavior: intentionally different from the desktop arrangement.`);
         } else {
             lines.push(`Tablet responsive behavior: adapt the desktop arrangement naturally.`);
         }
-        if (box.responsive && box.responsive.mobile) {
+        if (getResponsiveOverride(box, "mobile")) {
             lines.push(`Mobile responsive behavior: intentionally different from the desktop arrangement.`);
         } else {
             lines.push(`Mobile responsive behavior: adapt the desktop arrangement naturally.`);
@@ -3088,36 +3096,97 @@ function generateExportText() {
     return lines.join("\n");
 }
 
-document.getElementById("copyButton")
-    .addEventListener("click", async () => {
-        const text =
-            generateExportText();
+const copyButton = document.getElementById("copyButton");
+const copyMessage = document.getElementById("copyMessage");
 
-        try {
-            await navigator.clipboard.writeText(text);
-        } catch {
-            const textarea =
-                document.createElement("textarea");
+function showCopyMessage(message, success = true) {
+    if (!copyMessage) return;
 
-            textarea.value = text;
-            document.body.appendChild(textarea);
-            textarea.select();
+    copyMessage.textContent = message;
+    copyMessage.classList.toggle("copy-success", success);
+    copyMessage.classList.toggle("copy-error", !success);
+    copyMessage.classList.add("show");
 
-            document.execCommand("copy");
+    clearTimeout(window.copyMessageTimer);
+    window.copyMessageTimer = setTimeout(() => {
+        copyMessage.classList.remove("show");
+    }, 2500);
+}
 
-            textarea.remove();
+function copyTextToClipboard(text) {
+    // Use the synchronous copy command first. This works when the user
+    // opens the HTML directly from a file, where navigator.clipboard may
+    // be unavailable because file:// is not a secure context.
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.left = "0";
+    textarea.style.top = "0";
+    textarea.style.width = "1px";
+    textarea.style.height = "1px";
+    textarea.style.opacity = "0";
+    textarea.style.pointerEvents = "none";
+    document.body.appendChild(textarea);
+
+    textarea.focus({ preventScroll: true });
+    textarea.select();
+    textarea.setSelectionRange(0, textarea.value.length);
+
+    let copied = false;
+    try {
+        copied = document.execCommand("copy");
+    } catch (error) {
+        copied = false;
+    }
+
+    textarea.remove();
+
+    if (copied) return true;
+
+    // If the browser supports the modern Clipboard API, try it as a
+    // second option. This is intentionally a separate fallback so a
+    // rejected promise cannot prevent the success toast.
+    if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(text)
+            .then(() => true)
+            .catch(() => false);
+    }
+
+    return false;
+}
+
+copyButton.addEventListener("click", async () => {
+    const originalText = copyButton.textContent;
+    copyButton.disabled = true;
+
+    try {
+        // This is intentionally plain text: an AI design brief, NOT HTML/CSS/JavaScript.
+        const designBrief = generateExportText();
+        const copied = await copyTextToClipboard(designBrief);
+
+        if (!copied) {
+            throw new Error("Clipboard copy was not available in this browser/context.");
         }
 
-        const message =
-            document.getElementById("copyMessage");
+        copyButton.textContent = "Copied ✓";
+        showCopyMessage("Copied to clipboard", true);
 
-        message.classList.add("show");
+        setTimeout(() => {
+            copyButton.textContent = originalText;
+            copyButton.disabled = false;
+        }, 1800);
+    } catch (error) {
+        console.error("Could not copy design brief:", error);
+        copyButton.textContent = "Copy failed";
+        showCopyMessage("Could not copy — please try again", false);
 
-        setTimeout(
-            () => message.classList.remove("show"),
-            2000
-        );
-    });
+        setTimeout(() => {
+            copyButton.textContent = originalText;
+            copyButton.disabled = false;
+        }, 1800);
+    }
+});
 
 /* =========================================================
    MODAL BACKDROP
