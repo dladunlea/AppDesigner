@@ -988,7 +988,7 @@ body {
     id="copyMessage"
     class="copy-message"
 >
-    Copied!
+    Copied to clipboard
 </div>
 
 
@@ -2980,70 +2980,43 @@ applyGridZoom();
 function generateExportText() {
     ensureLayouts();
 
-    const lines = [];
-
-    lines.push(`WEB PAGE LAYOUT PLAN`);
-    lines.push(`====================`);
-    lines.push(``);
-    lines.push(`IMPORTANT IMPLEMENTATION NOTE:`);
-    lines.push(`The dimensions and grid positions in this document are APPROXIMATE DESIGN GUIDES.`);
-    lines.push(`They are NOT fixed pixel dimensions, required CSS values, or implementation constraints.`);
-    lines.push(``);
-    lines.push(`Use this plan to understand:`);
-    lines.push(`- Overall page structure`);
-    lines.push(`- Visual hierarchy`);
-    lines.push(`- Relative proportions`);
-    lines.push(`- Position and relationships of major elements`);
-    lines.push(`- Parent/child relationships`);
-    lines.push(`- Intended responsive behavior`);
-    lines.push(`- Color scheme`);
-    lines.push(``);
-    lines.push(`The final website should use responsive HTML/CSS and adapt naturally to`);
-    lines.push(`different screen sizes, window sizes, and orientations.`);
-    lines.push(`DO NOT reproduce the planner's grid in the final website.`);
-    lines.push(`DO NOT treat grid coordinates, cell counts, or planner dimensions as`);
-    lines.push(`exact implementation requirements.`);
-    lines.push(``);
-
-    lines.push(`PROJECT: ${projectNameInput.value.trim() || "Untitled Project"}`);
-    lines.push(``);
-
-    lines.push(`RESPONSIVE INTENT`);
-    lines.push(`=================`);
-    lines.push(``);
-    lines.push(`PC / DESKTOP:`);
-    lines.push(`Use the PC layout as the primary/base visual composition.`);
-    lines.push(`Prioritize the relationships and hierarchy shown in the planner.`);
-    lines.push(``);
-    lines.push(`TABLET:`);
-    lines.push(`Adapt the base layout to a narrower viewport.`);
-    lines.push(`Preserve the intended hierarchy, but allow elements to resize, wrap,`);
-    lines.push(`stack, or reposition when appropriate.`);
-    lines.push(``);
-    lines.push(`MOBILE:`);
-    lines.push(`Adapt the layout to a narrow viewport.`);
-    lines.push(`Elements may stack, become full-width, collapse, or reposition.`);
-    lines.push(`Prioritize usability and the visual relationships shown in the plan.`);
-    lines.push(``);
-
+    const project = projectNameInput.value.trim() || "Untitled Project";
     const primary = hexFromColor(`hsl(${currentHue()},30%,90%)`);
     const secondary = hexFromColor(`hsl(${currentHue()},45%,78%)`);
     const accent = hexFromColor(`hsl(${currentHue()},70%,55%)`);
 
-    lines.push(`COLOR SYSTEM`);
-    lines.push(`============`);
+    const lines = [];
+
+    lines.push(`AI WEB DESIGN BRIEF`);
+    lines.push(`===================`);
     lines.push(``);
-    lines.push(`Primary (approximately 60%): ${primary}`);
-    lines.push(`Secondary (approximately 30%): ${secondary}`);
-    lines.push(`Accent (approximately 10%): ${accent}`);
-    lines.push(`Hue setting: approximately ${currentHue()}°`);
+    lines.push(`Use the information below as a visual and functional design brief for a website.`);
+    lines.push(`This describes DESIGN INTENT, not a pixel-perfect specification.`);
     lines.push(``);
-    lines.push(`These colors are visual design references, not mandatory implementation values.`);
-    lines.push(`The final implementation may adjust shades for accessibility, contrast, and usability.`);
+    lines.push(`PROJECT`);
+    lines.push(`-------`);
+    lines.push(`${project}`);
+    lines.push(``);
+    lines.push(`IMPORTANT: Do NOT recreate the planner grid or treat its coordinates, cell counts,`);
+    lines.push(`widths, heights, or measurements as fixed CSS values. The layout descriptions are`);
+    lines.push(`approximate references for hierarchy, positioning, proportions, and relationships.`);
+    lines.push(`Build the final site with responsive HTML/CSS that adapts naturally to different`);
+    lines.push(`screen sizes and orientations.`);
     lines.push(``);
 
-    lines.push(`PAGE ELEMENTS`);
-    lines.push(`=============`);
+    lines.push(`COLOR DIRECTION`);
+    lines.push(`--------------`);
+    lines.push(`The planner uses a continuous color spectrum. The selected colors are visual references:`);
+    lines.push(`Primary: ${primary}`);
+    lines.push(`Secondary: ${secondary}`);
+    lines.push(`Accent: ${accent}`);
+    lines.push(`Overall hue position: approximately ${currentHue()}° on the spectrum.`);
+    lines.push(`Use these colors as a starting point and adjust shades as needed for contrast,`);
+    lines.push(`accessibility, readability, and a cohesive visual system.`);
+    lines.push(``);
+
+    lines.push(`PAGE STRUCTURE AND ELEMENTS`);
+    lines.push(`--------------------------`);
     lines.push(``);
 
     function qualitativeWidth(box, mode) {
@@ -3061,10 +3034,8 @@ function generateExportText() {
         const cfg = DEVICE_CONFIG[mode];
         const cx = (layout.x + layout.width / 2) / cfg.columns;
         const cy = (layout.y + layout.height / 2) / cfg.rows;
-
         const horizontal = cx < 0.33 ? "left" : cx > 0.67 ? "right" : "center";
         const vertical = cy < 0.33 ? "top" : cy > 0.67 ? "bottom" : "middle";
-
         return `${vertical}-${horizontal}`;
     }
 
@@ -3072,61 +3043,47 @@ function generateExportText() {
         const parent = getBox(box.parentId);
         const color = colorInfo(box);
 
-        lines.push(`BOX ${box.number}: ${box.label || "Untitled"}`);
-        lines.push(`Purpose: ${box.description || "No description provided."}`);
-        lines.push(`Parent: ${parent ? `Box ${parent.number} (${parent.label || "Untitled"})` : "None"}`);
-        lines.push(`Color Role: ${color.role}`);
-        lines.push(`Suggested Color: ${color.hex}`);
-        lines.push(`Color CSS Reference: ${color.cssColor}`);
+        lines.push(`ELEMENT: ${box.label || `Box ${box.number}`}`);
+        lines.push(`Purpose / Function: ${box.description || "No description provided."}`);
+        lines.push(`Hierarchy: ${parent ? `Inside ${parent.label || `Box ${parent.number}`}` : "Top-level page element"}`);
+        lines.push(`Color role: ${color.role}`);
+        lines.push(`Suggested color: ${color.hex}`);
         lines.push(``);
-        lines.push(`IMPORTANT: The following layout descriptions are approximate visual guidance.`);
-        lines.push(`Use them to reproduce the intended composition, not as fixed dimensions.`);
+        lines.push(`APPROXIMATE LAYOUT INTENT`);
+        lines.push(`Desktop: ${qualitativePosition(box, "pc")}, ${qualitativeWidth(box, "pc")} visual area.`);
+        lines.push(`Tablet: ${qualitativePosition(box, "tablet")}, ${qualitativeWidth(box, "tablet")} visual area.`);
+        lines.push(`Mobile: ${qualitativePosition(box, "mobile")}, ${qualitativeWidth(box, "mobile")} visual area.`);
+
+        if (box.responsive && box.responsive.tablet) {
+            lines.push(`Tablet responsive behavior: intentionally different from the desktop arrangement.`);
+        } else {
+            lines.push(`Tablet responsive behavior: adapt the desktop arrangement naturally.`);
+        }
+        if (box.responsive && box.responsive.mobile) {
+            lines.push(`Mobile responsive behavior: intentionally different from the desktop arrangement.`);
+        } else {
+            lines.push(`Mobile responsive behavior: adapt the desktop arrangement naturally.`);
+        }
+
         lines.push(``);
-
-        ["pc", "tablet", "mobile"].forEach(mode => {
-            const label = mode === "pc" ? "PC / Desktop" : mode.charAt(0).toUpperCase() + mode.slice(1);
-            const layout = getEffectiveLayout(box, mode, {});
-            const hasOverride = mode !== "pc" && box.responsive && box.responsive[mode];
-
-            lines.push(`${label}:`);
-            lines.push(`  Approximate position: ${qualitativePosition(box, mode)}`);
-            lines.push(`  Approximate width: ${qualitativeWidth(box, mode)}`);
-            lines.push(`  Approximate relative width: ${Math.round(layout.width / DEVICE_CONFIG[mode].columns * 100)}% of planner area`);
-            lines.push(`  Approximate relative height: ${Math.round(layout.height / DEVICE_CONFIG[mode].rows * 100)}% of planner area`);
-
-            if (hasOverride) {
-                lines.push(`  Responsive intent: Custom override — intentionally different from the base composition.`);
-            } else if (mode === "pc") {
-                lines.push(`  Responsive intent: Base composition.`);
-            } else {
-                lines.push(`  Responsive intent: No custom override — adapt naturally from the base composition.`);
-            }
-
-            lines.push(``);
-        });
-
-        lines.push(`Layout relationship guidance:`);
-        lines.push(`  Preserve this element's relationship to neighboring and parent elements.`);
-        lines.push(`  Use flexible CSS layout rather than fixed planner coordinates.`);
+        lines.push(`Design guidance: Preserve this element's purpose, hierarchy, relationship to nearby elements,`);
+        lines.push(`and approximate visual prominence. Choose an appropriate responsive layout method rather`);
+        lines.push(`than copying planner dimensions.`);
         lines.push(``);
         lines.push(`----------------------------------------`);
         lines.push(``);
     });
 
-    lines.push(`IMPLEMENTATION GUIDANCE`);
-    lines.push(`======================`);
+    lines.push(`RESPONSIVE DESIGN EXPECTATIONS`);
+    lines.push(`------------------------------`);
+    lines.push(`Desktop should establish the primary composition.`);
+    lines.push(`Tablet should preserve the hierarchy while allowing elements to resize, wrap, stack, or reposition.`);
+    lines.push(`Mobile should prioritize usability, readable content, and sensible stacking/repositioning.`);
+    lines.push(`Use semantic HTML plus CSS Grid, Flexbox, flexible units, and media/container queries as appropriate.`);
+    lines.push(`Do not reproduce the planner's grid.`);
+    lines.push(`Do not use the planner's measurements as fixed website dimensions.`);
     lines.push(``);
-    lines.push(`Use semantic HTML where appropriate.`);
-    lines.push(`Use CSS Grid and/or Flexbox for layout.`);
-    lines.push(`Use responsive units such as %, fr, rem, vw, and clamp() where appropriate.`);
-    lines.push(`Use media queries or container queries when layout relationships need to change.`);
-    lines.push(`Do not use the planner's grid cells as website dimensions.`);
-    lines.push(`Do not reproduce the planner's 24×20, 18×24, or 12×28 grids in the final website.`);
-    lines.push(`Do not assume PC, tablet, and mobile must have identical proportions.`);
-    lines.push(`The planner represents DESIGN INTENT, not a pixel-perfect specification.`);
-    lines.push(`When the available width changes, the implementation should continue to look intentional`);
-    lines.push(`rather than simply shrinking everything proportionally.`);
-    lines.push(``);
+    lines.push(`END OF DESIGN BRIEF`);
 
     return lines.join("\n");
 }
