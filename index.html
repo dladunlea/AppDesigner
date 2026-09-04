@@ -558,14 +558,22 @@ body {
     height: 18px;
     border-radius: 10px;
     background:
-        linear-gradient(
-            to right,
-            hsl(210,70%,55%),
-            hsl(270,70%,55%),
-            hsl(330,70%,55%),
-            hsl(30,70%,55%),
-            hsl(60,70%,55%)
-        );
+        linear-gradient(to right,
+    hsl(215,45%,55%),
+    hsl(195,45%,55%),
+    hsl(175,42%,50%),
+    hsl(150,42%,48%),
+    hsl(125,40%,45%),
+    hsl(100,42%,48%),
+    hsl(75,45%,48%),
+    hsl(55,50%,52%),
+    hsl(35,50%,52%),
+    hsl(15,50%,52%),
+    hsl(350,45%,55%),
+    hsl(315,42%,55%),
+    hsl(285,40%,55%),
+    hsl(250,45%,58%)
+);
 }
 
 /* =========================================================
@@ -2989,9 +2997,9 @@ function generateExportText() {
     ensureLayouts();
 
     const project = projectNameInput.value.trim() || "Untitled Project";
-    const primary = hexFromColor(`hsl(${currentHue()},30%,90%)`);
-    const secondary = hexFromColor(`hsl(${currentHue()},45%,78%)`);
-    const accent = hexFromColor(`hsl(${currentHue()},70%,55%)`);
+    const primary = hexFromColor(`hsl(${currentHue()},25%,90%)`);
+    const secondary = hexFromColor(`hsl(${currentHue()},35%,78%)`);
+    const accent = hexFromColor(`hsl(${currentHue()},50%,55%)`);
 
     const lines = [];
 
