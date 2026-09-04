@@ -637,14 +637,11 @@ body {
 }
 
 
-#hueSlider { accent-color: #6b8f72; }
-.hue-slider-wrap { position: relative; width: 260px; height: 24px; display: flex; align-items: center; }
-.hue-slider-gradient { position: absolute; left: 0; right: 0; top: 7px; height: 10px; border-radius: 999px; background: linear-gradient(to right,
-    hsl(215,45%,55%), hsl(195,45%,55%), hsl(175,42%,50%), hsl(150,42%,48%),
-    hsl(125,40%,45%), hsl(100,42%,48%), hsl(75,45%,48%), hsl(55,50%,52%),
-    hsl(35,50%,52%), hsl(15,50%,52%), hsl(350,45%,55%), hsl(315,42%,55%),
-    hsl(285,40%,55%), hsl(250,45%,58%)); pointer-events: none; }
-.hue-slider-wrap .hue-slider { position: relative; z-index: 1; width: 260px; background: transparent; }
+.hue-slider-green {
+    accent-color: #2e8b57;
+}
+
+#hueSlider{accent-color:#4f8f4f}.hue-slider-wrap{position:relative;width:260px;height:24px;display:flex;align-items:center}.hue-slider-gradient{position:absolute;left:0;right:0;top:7px;height:10px;border-radius:999px;background:linear-gradient(to right,hsl(215,70%,55%),hsl(195,70%,55%),hsl(175,65%,50%),hsl(150,65%,48%),hsl(125,60%,45%),hsl(100,65%,48%),hsl(75,65%,48%),hsl(55,75%,52%),hsl(35,78%,52%),hsl(15,78%,52%),hsl(350,72%,55%),hsl(315,65%,55%),hsl(285,60%,55%),hsl(250,65%,58%));pointer-events:none}.hue-slider-wrap .hue-slider{position:relative;z-index:1;width:260px;background:transparent}
 </style>
 </head>
 
@@ -871,6 +868,8 @@ let boxes = [];
 let selectedBoxId = null;
 let nextBoxNumber = 1;
 let addMode = false;
+let gridZoom = 1;
+const MIN_GRID_ZOOM = 0.5, MAX_GRID_ZOOM = 2.5, GRID_ZOOM_STEP = 0.1;
 
 /* =========================================================
    RESPONSIVE LAYOUT MODEL
@@ -996,6 +995,7 @@ function markLayoutOverride(box) {
     box.responsiveOverrides[activeDevice] = geometryFromBox(box);
 }
 
+
 function applyDevice(device) {
     saveCurrentDeviceLayouts();
     ensureLayouts();
@@ -1064,16 +1064,6 @@ function updatePreviewSize() {
     canvas.style.width = `${previewWidth}px`;
     canvas.style.height = `${GRID_ROWS * cell}px`;
 
-    if (previewWidthInput) previewWidthInput.value = Math.round(previewWidth);
-    if (previewWidthLabel) previewWidthLabel.textContent = `${Math.round(previewWidth)}px`;
-}
-
-if (previewWidthInput) {
-    previewWidthInput.addEventListener("input", () => {
-        previewWidth = Number(previewWidthInput.value);
-        updatePreviewSize();
-        renderBoxes();
-    });
 }
 
 updatePreviewSize();
@@ -1265,6 +1255,9 @@ function canResizeParent(box, newAbsoluteRect) {
    COLORS
 ========================================================= */
 
+/* =========================================================
+   GREEN COLOR SCHEMES
+========================================================= */
 function currentHue(){
  const t=Number(hueSlider.value)/100; const s=[{t:0,h:215},{t:.08,h:195},{t:.16,h:175},{t:.24,h:150},{t:.32,h:125},{t:.40,h:100},{t:.48,h:75},{t:.56,h:55},{t:.64,h:35},{t:.72,h:15},{t:.80,h:350},{t:.88,h:315},{t:0.94,h:285},{t:1,h:250}];
  for(let i=0;i<s.length-1;i++){if(t<=s[i+1].t){const a=s[i],b=s[i+1],q=(t-a.t)/(b.t-a.t);return Math.round(a.h+(b.h-a.h)*q);}} return 55;
@@ -1520,6 +1513,11 @@ function updatePropertyPanel() {
     document.getElementById("labelInput").value = box.label;
     document.getElementById("descriptionInput").value = box.description;
 
+    /*
+      Sidebar X/Y are LOCAL coordinates when nested,
+      and canvas coordinates when top-level.
+    */
+
     populateParentSelect(box);
 
     document.querySelectorAll(".role-option").forEach(button => {
@@ -1611,6 +1609,7 @@ document.getElementById("descriptionInput").addEventListener("input", event => {
         }
     }
 });
+
 
 /* =========================================================
    CHANGE PARENT
@@ -1738,6 +1737,14 @@ document.getElementById("customColorInput").addEventListener("input", event => {
 /* =========================================================
    ADD BOX MODE
 ========================================================= */
+function cancelAddMode() {
+    creating = false;
+    createStart = null;
+    addMode = false;
+    addBoxButton.classList.remove("active");
+    canvas.classList.remove("add-mode");
+}
+
 addBoxButton.addEventListener("click", () => {
     addMode = !addMode;
 
@@ -1829,6 +1836,15 @@ canvas.addEventListener("pointerup", event => {
     width = Math.min(width, GRID_COLUMNS - x);
     height = Math.min(height, GRID_ROWS - y);
 
+    const testBox = {
+        id: "__new__",
+        x,
+        y,
+        width,
+        height,
+        parentId: null
+    };
+
     const collision = boxes.some(other =>
         overlaps(
             {
@@ -1842,102 +1858,20 @@ canvas.addEventListener("pointerup", event => {
     );
 
     if (collision) {
-        alert(
-            "This box overlaps another box. Add Box mode has been cancelled."
-        );
+        alert("This box overlaps another box. Add Box mode has been cancelled.");
+        createStart = null;
         cancelAddMode();
         return;
     }
 
-    createBox({ x, y, width, height });
-
     createStart = null;
+    createBox({ x, y, width, height });
 });
 
 canvas.addEventListener("pointercancel", () => {
     creating = false;
     createStart = null;
 });
-
-function cancelAddMode() {
-    creating = false;
-    createStart = null;
-    addMode = false;
-    addBoxButton.classList.remove("active");
-    canvas.classList.remove("add-mode");
-}
-
-function createBox(geometry) {
-    if (!geometry) return;
-
-    const number = nextBoxNumber;
-
-    const label = `Box ${number}`;
-    const description = "";
-
-    const box = {
-        id:
-            typeof crypto !== "undefined" &&
-            crypto.randomUUID
-                ? crypto.randomUUID()
-                : `box-${Date.now()}-${Math.random()}`,
-
-        number,
-
-        label:
-            label || `Box ${number}`,
-
-        description,
-
-        x: geometry.x,
-        y: geometry.y,
-
-        width: geometry.width,
-        height: geometry.height,
-
-        parentId: null,
-
-        colorRole: "primary",
-        customColor: "#8aa8c8",
-        baseLayout: null,
-        responsiveOverrides: {
-            tablet: null,
-            mobile: null
-        }
-    };
-
-    if (
-        !canPlaceAbsolute(
-            box,
-            box.x,
-            box.y,
-            box.width,
-            box.height,
-            null
-        )
-    ) {
-        alert(
-            "There is no room for a new box here. Add Box mode has been cancelled."
-        );
-        cancelAddMode();
-        return;
-    }
-
-    nextBoxNumber++;
-    boxes.push(box);
-    ensureResponsiveModel(box);
-
-    if (activeDevice === "pc") {
-        box.baseLayout = geometryFromBox(box);
-    } else {
-        box.responsiveOverrides[activeDevice] = geometryFromBox(box);
-    }
-
-    ensureLayouts();
-
-    cancelAddMode();
-    selectBox(box.id);
-}
 
 /* =========================================================
    CANVAS BOX POINTER DOWN
@@ -2519,11 +2453,6 @@ document.addEventListener("keydown", event => {
     }
 
     if (event.key === "Escape") {
-        addMode = false;
-
-        addBoxButton.classList.remove("active");
-        canvas.classList.remove("add-mode");
-
         cancelAddMode();
         clearParentHighlight();
 
@@ -2667,8 +2596,6 @@ function layoutText(box, device) {
 /* =========================================================
    GRID-ONLY ZOOM
 ========================================================= */
-let gridZoom = 1;
-const MIN_GRID_ZOOM = 0.5, MAX_GRID_ZOOM = 2.5, GRID_ZOOM_STEP = 0.1;
 function applyGridZoom(){const v=document.getElementById("zoomValue"),c=document.getElementById("canvas"),a=document.getElementById("canvasArea");if(v)v.textContent=`${Math.round(gridZoom*100)}%`;if(c){const w=Number(previewWidth)||1200,ht=GRID_ROWS*getDisplayCellSize();c.style.transformOrigin="top left";c.style.transform=`scale(${gridZoom})`;c.style.width=`${w}px`;c.style.height=`${ht}px`;c.style.marginRight=`${Math.max(0,w*(gridZoom-1))}px`;c.style.marginBottom=`${Math.max(0,ht*(gridZoom-1))}px`;}if(a)a.style.overflow="auto";}
 document.getElementById("zoomInButton")?.addEventListener("click",()=>{gridZoom=Math.min(MAX_GRID_ZOOM,+(gridZoom+GRID_ZOOM_STEP).toFixed(2));applyGridZoom();});
 document.getElementById("zoomOutButton")?.addEventListener("click",()=>{gridZoom=Math.max(MIN_GRID_ZOOM,+(gridZoom-GRID_ZOOM_STEP).toFixed(2));applyGridZoom();});
