@@ -102,6 +102,134 @@ body {
 }
 
 /* =========================================================
+   DEVICE SWITCHER
+========================================================= */
+.device-switcher {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+}
+
+.device-switcher-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    margin-right: 2px;
+}
+
+.device-button {
+    border: 1px solid #cbd1d5;
+    background: white;
+    color: var(--text);
+    border-radius: 5px;
+    padding: 7px 9px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.device-button:hover {
+    background: #f3f5f6;
+}
+
+.device-button.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}
+
+.device-status {
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 5px;
+}
+
+.layout-mode-status {
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 4px 6px;
+    border-radius: 4px;
+    background: #f3f5f6;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.responsive-reset-row {
+    margin: -2px 0 11px;
+}
+
+.secondary-button {
+    width: 100%;
+    border: 1px solid #c7cdd1;
+    border-radius: 5px;
+    padding: 7px 8px;
+    background: white;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.secondary-button:hover {
+    background: #f3f5f6;
+}
+
+@media (max-width: 900px) {
+    .topbar { gap: 8px; padding: 0 10px; }
+    .brand { display: none; }
+    .project-name { min-width: 120px; }
+    .device-switcher-label { display: none; }
+}
+
+@media (max-width: 650px) {
+    .app { grid-template-columns: 210px 1fr; }
+    .device-button { padding: 6px 7px; }
+    .project-name { max-width: 180px; }
+    .primary-button { padding: 8px 9px; }
+}
+
+/* =========================================================
+   RESPONSIVE PREVIEW CONTROL
+========================================================= */
+.preview-size-control {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 210px;
+}
+
+.preview-size-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    white-space: nowrap;
+}
+
+#previewWidth {
+    width: 105px;
+    accent-color: var(--accent);
+}
+
+.preview-width-value {
+    min-width: 48px;
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--text);
+    text-align: right;
+}
+
+@media (max-width: 1050px) {
+    .preview-size-control { min-width: 145px; }
+    #previewWidth { width: 75px; }
+}
+
+@media (max-width: 760px) {
+    .preview-size-control { display: none; }
+}
+
+/* =========================================================
    SIDEBAR
 ========================================================= */
 
@@ -217,7 +345,7 @@ body {
         linear-gradient(to bottom, #dce1e5 1px, transparent 1px);
 
     background-size:
-        var(--cell-size) var(--cell-size);
+        var(--preview-cell-size) var(--preview-cell-size);
 
     box-shadow:
         0 0 0 1px #c8cdd1;
@@ -571,6 +699,19 @@ body {
         aria-label="Project name"
     >
 
+    <div class="device-switcher" aria-label="Preview device">
+        <span class="device-switcher-label">Preview:</span>
+        <button class="device-button active" data-device="pc">PC</button>
+        <button class="device-button" data-device="tablet">Tablet</button>
+        <button class="device-button" data-device="mobile">Mobile</button>
+    </div>
+
+    <div class="preview-size-control" title="Preview width">
+        <span class="preview-size-label">Width</span>
+        <input id="previewWidth" type="range" min="320" max="1440" step="1" value="1200" aria-label="Preview width">
+        <span id="previewWidthLabel" class="preview-width-value">1200px</span>
+    </div>
+
     <button
         id="copyButton"
         class="primary-button"
@@ -616,6 +757,9 @@ body {
         id="propertyPanel"
         class="property-panel hidden"
     >
+
+        <div class="device-status">Editing: <strong id="deviceLabel">PC</strong></div>
+        <div id="layoutModeStatus" class="layout-mode-status">Using PC base layout</div>
 
         <div class="panel-title">
             Box Properties
@@ -689,6 +833,12 @@ body {
 
             </div>
 
+        </div>
+
+        <div id="responsiveResetRow" class="responsive-reset-row">
+            <button id="resetResponsiveButton" type="button" class="secondary-button">
+                Reset to Base Layout
+            </button>
         </div>
 
         <div class="field">
@@ -854,187 +1004,342 @@ body {
 
 
 <script>
-
 /* =========================================================
    CONFIG
 ========================================================= */
-
-const GRID_COLUMNS = 24;
-const GRID_ROWS = 20;
-const CELL_SIZE = 20;
+let GRID_COLUMNS = 24;
+let GRID_ROWS = 20;
+const BASE_CELL_SIZE = 20;
 const MAX_DEPTH = 5;
 
+const DEVICE_CONFIG = {
+    pc: { label: "PC", columns: 24, rows: 20, defaultWidth: 1200 },
+    tablet: { label: "Tablet", columns: 18, rows: 24, defaultWidth: 768 },
+    mobile: { label: "Mobile", columns: 12, rows: 28, defaultWidth: 390 }
+};
+
+let activeDevice = "pc";
+let previewWidth = 1200;
 
 /* =========================================================
-   STATE
+   RESPONSIVE LAYOUT MODEL
+
+   PC is the BASE layout.
+   Tablet and Mobile store only user-created overrides.
+   If there is no override, their layout is derived from PC.
 ========================================================= */
+function geometryFromBox(box) {
+    return { x: box.x, y: box.y, width: box.width, height: box.height };
+}
 
-let boxes = [];
-let selectedBoxId = null;
-let nextBoxNumber = 1;
+function cloneGeometry(geometry) {
+    return {
+        x: Number(geometry.x) || 0,
+        y: Number(geometry.y) || 0,
+        width: Math.max(1, Number(geometry.width) || 1),
+        height: Math.max(1, Number(geometry.height) || 1)
+    };
+}
 
-let addMode = false;
+function ensureResponsiveModel(box) {
+    if (!box.baseLayout) {
+        if (box.layouts && box.layouts.pc) {
+            box.baseLayout = cloneGeometry(box.layouts.pc);
+        } else {
+            box.baseLayout = geometryFromBox(box);
+        }
+    }
 
-let createStart = null;
-let creating = false;
+    if (!box.responsiveOverrides) {
+        box.responsiveOverrides = { tablet: null, mobile: null };
+    }
 
+    /* Migrate the previous version's device layouts without losing work. */
+    if (box.layouts) {
+        if (!box.responsiveOverrides.tablet && box.layouts.tablet) {
+            box.responsiveOverrides.tablet = cloneGeometry(box.layouts.tablet);
+        }
+        if (!box.responsiveOverrides.mobile && box.layouts.mobile) {
+            box.responsiveOverrides.mobile = cloneGeometry(box.layouts.mobile);
+        }
+        delete box.layouts;
+    }
+}
+
+function getBaseGeometry(box) {
+    ensureResponsiveModel(box);
+    return cloneGeometry(box.baseLayout);
+}
+
+function getResponsiveOverride(box, device) {
+    ensureResponsiveModel(box);
+    return box.responsiveOverrides[device] || null;
+}
+
+function getEffectiveGeometry(box, device = activeDevice, cache = {}) {
+    ensureResponsiveModel(box);
+    const key = `${device}:${box.id}`;
+    if (cache[key]) return cache[key];
+
+    if (device === "pc") {
+        cache[key] = getBaseGeometry(box);
+        return cache[key];
+    }
+
+    const override = getResponsiveOverride(box, device);
+    if (override) {
+        cache[key] = cloneGeometry(override);
+        return cache[key];
+    }
+
+    const base = getBaseGeometry(box);
+    const target = DEVICE_CONFIG[device];
+    const pc = DEVICE_CONFIG.pc;
+
+    const geometry = {
+        x: Math.round(base.x * target.columns / pc.columns),
+        y: Math.round(base.y * target.rows / pc.rows),
+        width: Math.max(1, Math.round(base.width * target.columns / pc.columns)),
+        height: Math.max(1, Math.round(base.height * target.rows / pc.rows))
+    };
+
+    /* Automatically derived layouts should remain inside parents. */
+    if (box.parentId) {
+        const parent = getBox(box.parentId);
+        if (parent) {
+            const parentGeometry = getEffectiveGeometry(parent, device, cache);
+            geometry.width = Math.min(geometry.width, parentGeometry.width);
+            geometry.height = Math.min(geometry.height, parentGeometry.height);
+            geometry.x = clamp(geometry.x, 0, Math.max(0, parentGeometry.width - geometry.width));
+            geometry.y = clamp(geometry.y, 0, Math.max(0, parentGeometry.height - geometry.height));
+        }
+    }
+
+    cache[key] = geometry;
+    return geometry;
+}
+
+function saveCurrentDeviceLayouts() {
+    boxes.forEach(box => ensureResponsiveModel(box));
+
+    boxes.forEach(box => {
+        if (activeDevice === "pc") {
+            box.baseLayout = geometryFromBox(box);
+        } else if (box._layoutOverrideDirty && box._layoutOverrideDirty[activeDevice]) {
+            box.responsiveOverrides[activeDevice] = geometryFromBox(box);
+            box._layoutOverrideDirty[activeDevice] = false;
+        }
+    });
+}
+
+function markLayoutOverride(box) {
+    ensureResponsiveModel(box);
+
+    if (activeDevice === "pc") {
+        box.baseLayout = geometryFromBox(box);
+        return;
+    }
+
+    if (!box._layoutOverrideDirty) box._layoutOverrideDirty = {};
+    box._layoutOverrideDirty[activeDevice] = true;
+    box.responsiveOverrides[activeDevice] = geometryFromBox(box);
+}
+
+function updatePropertyInputLimits() {
+    const ids = ["xInput", "yInput", "widthInput", "heightInput"];
+    ids.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) input.max = id.startsWith("x") || id.startsWith("width") ? GRID_COLUMNS : GRID_ROWS;
+    });
+}
+
+function applyDevice(device) {
+    saveCurrentDeviceLayouts();
+    ensureLayouts();
+
+    activeDevice = device;
+    GRID_COLUMNS = DEVICE_CONFIG[device].columns;
+    GRID_ROWS = DEVICE_CONFIG[device].rows;
+
+    /* Give each device a sensible starting preview width. */
+    if (device === "pc") previewWidth = 1200;
+    if (device === "tablet") previewWidth = 768;
+    if (device === "mobile") previewWidth = 390;
+
+    const cache = {};
+    boxes.forEach(box => {
+        const layout = getEffectiveGeometry(box, device, cache);
+        box.x = layout.x;
+        box.y = layout.y;
+        box.width = layout.width;
+        box.height = layout.height;
+    });
+
+    updatePreviewSize();
+
+    document.querySelectorAll(".device-button").forEach(button => {
+        button.classList.toggle("active", button.dataset.device === activeDevice);
+    });
+
+    const deviceLabel = document.getElementById("deviceLabel");
+    if (deviceLabel) deviceLabel.textContent = DEVICE_CONFIG[activeDevice].label;
+
+    updatePropertyInputLimits();
+    renderBoxes();
+    renderSidebar();
+    updatePropertyPanel();
+}
+
+function ensureLayouts() {
+    boxes.forEach(box => ensureResponsiveModel(box));
+}
+
+/*
+  IMPORTANT:
+  Dragging/resizing is handled at the canvas/window level.
+  We never re-render the active box during an interaction.
+*/
 let interaction = null;
-
 
 /* =========================================================
    ELEMENTS
 ========================================================= */
+const canvas = document.getElementById("canvas");
+const canvasArea = document.getElementById("canvasArea");
+const boxList = document.getElementById("boxList");
+const addBoxButton = document.getElementById("addBoxButton");
+const propertyPanel = document.getElementById("propertyPanel");
+const projectNameInput = document.getElementById("projectName");
+const hueSlider = document.getElementById("hueSlider");
+const previewWidthInput = document.getElementById("previewWidth");
+const previewWidthLabel = document.getElementById("previewWidthLabel");
 
-const canvas =
-    document.getElementById("canvas");
-
-const canvasArea =
-    document.getElementById("canvasArea");
-
-const boxList =
-    document.getElementById("boxList");
-
-const addBoxButton =
-    document.getElementById("addBoxButton");
-
-const propertyPanel =
-    document.getElementById("propertyPanel");
-
-const projectNameInput =
-    document.getElementById("projectName");
-
-const hueSlider =
-    document.getElementById("hueSlider");
-
-
-/* =========================================================
-   CANVAS
-========================================================= */
-
-canvas.style.width =
-    `${GRID_COLUMNS * CELL_SIZE}px`;
-
-canvas.style.height =
-    `${GRID_ROWS * CELL_SIZE}px`;
-
-
-/* =========================================================
-   BOX HELPERS
-========================================================= */
-
-function getBox(id) {
-    return boxes.find(
-        box => box.id === id
-    );
+function getDisplayCellSize() {
+    return previewWidth / GRID_COLUMNS;
 }
 
+function updatePreviewSize() {
+    const cell = getDisplayCellSize();
+    canvas.style.setProperty("--preview-cell-size", `${cell}px`);
+    canvas.style.width = `${previewWidth}px`;
+    canvas.style.height = `${GRID_ROWS * cell}px`;
+
+    if (previewWidthInput) previewWidthInput.value = Math.round(previewWidth);
+    if (previewWidthLabel) previewWidthLabel.textContent = `${Math.round(previewWidth)}px`;
+}
+
+if (previewWidthInput) {
+    previewWidthInput.addEventListener("input", () => {
+        previewWidth = Number(previewWidthInput.value);
+        updatePreviewSize();
+        renderBoxes();
+    });
+}
+
+updatePreviewSize();
+
+/* =========================================================
+   HELPERS
+========================================================= */
+function getBox(id) {
+    return boxes.find(box => box.id === id);
+}
 
 function getChildren(parentId) {
-    return boxes.filter(
-        box => box.parentId === parentId
-    );
+    return boxes.filter(box => box.parentId === parentId);
 }
 
-
 function getAncestors(box) {
-
     const result = [];
-
-    let current =
-        getBox(box.parentId);
+    let current = getBox(box.parentId);
 
     while (current) {
-
         result.push(current);
-
-        current =
-            getBox(current.parentId);
+        current = getBox(current.parentId);
     }
 
     return result;
 }
 
-
 function getDepth(box) {
-
     return getAncestors(box).length + 1;
 }
 
-
-function isDescendant(
-    boxId,
-    possibleAncestorId
-) {
-
-    let current =
-        getBox(boxId);
+function isDescendant(boxId, possibleAncestorId) {
+    let current = getBox(boxId);
 
     while (current && current.parentId) {
-
-        if (
-            current.parentId ===
-            possibleAncestorId
-        ) {
+        if (current.parentId === possibleAncestorId) {
             return true;
         }
-
-        current =
-            getBox(current.parentId);
+        current = getBox(current.parentId);
     }
 
     return false;
 }
 
-
 /* =========================================================
-   ABSOLUTE COORDINATES
+   COORDINATES
 ========================================================= */
 
+/*
+  Box x/y are LOCAL to their parent.
+  For display and collision detection we calculate ABSOLUTE
+  canvas coordinates.
+*/
 function getAbsolutePosition(box) {
-
     let x = box.x;
     let y = box.y;
-
-    let parent =
-        getBox(box.parentId);
+    let parent = getBox(box.parentId);
 
     while (parent) {
-
         x += parent.x;
         y += parent.y;
-
-        parent =
-            getBox(parent.parentId);
+        parent = getBox(parent.parentId);
     }
 
     return { x, y };
 }
 
-
 function getAbsoluteRect(box) {
-
-    const position =
-        getAbsolutePosition(box);
+    const pos = getAbsolutePosition(box);
 
     return {
-
-        x: position.x,
-
-        y: position.y,
-
+        x: pos.x,
+        y: pos.y,
         width: box.width,
-
         height: box.height
     };
 }
 
+function localFromAbsolute(box, absoluteX, absoluteY, parentId) {
+    if (!parentId) {
+        return {
+            x: absoluteX,
+            y: absoluteY
+        };
+    }
+
+    const parent = getBox(parentId);
+    if (!parent) {
+        return {
+            x: absoluteX,
+            y: absoluteY
+        };
+    }
+
+    const parentPos = getAbsolutePosition(parent);
+
+    return {
+        x: absoluteX - parentPos.x,
+        y: absoluteY - parentPos.y
+    };
+}
 
 /* =========================================================
    GEOMETRY
 ========================================================= */
-
 function overlaps(a, b) {
-
     return (
         a.x < b.x + b.width &&
         a.x + a.width > b.x &&
@@ -1043,799 +1348,459 @@ function overlaps(a, b) {
     );
 }
 
-
 function contains(parent, child) {
-
     return (
         child.x >= parent.x &&
         child.y >= parent.y &&
-        child.x + child.width <=
-            parent.x + parent.width &&
-        child.y + child.height <=
-            parent.y + parent.height
+        child.x + child.width <= parent.x + parent.width &&
+        child.y + child.height <= parent.y + parent.height
     );
 }
 
-
-function snap(value) {
-
-    return Math.round(
-        value / CELL_SIZE
-    );
+function snapPixelsToCells(pixelValue) {
+    return Math.round(pixelValue / getDisplayCellSize());
 }
 
-
-function clamp(
-    value,
-    min,
-    max
-) {
-
-    return Math.max(
-        min,
-        Math.min(max, value)
-    );
+function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
 }
-
 
 /* =========================================================
    VALIDATION
 ========================================================= */
-
-function canPlace(
-    box,
-    absoluteX,
-    absoluteY,
-    width,
-    height,
-    parentId
-) {
-
+function canPlaceAbsolute(box, absoluteX, absoluteY, width, height, parentId) {
     const test = {
-
         x: absoluteX,
-
         y: absoluteY,
-
         width,
-
         height
     };
-
-
-    /* Canvas boundaries */
 
     if (
         absoluteX < 0 ||
         absoluteY < 0 ||
-        absoluteX + width >
-            GRID_COLUMNS ||
-        absoluteY + height >
-            GRID_ROWS
+        absoluteX + width > GRID_COLUMNS ||
+        absoluteY + height > GRID_ROWS
     ) {
         return false;
     }
 
-
-    /* Parent boundary */
-
     if (parentId) {
+        const parent = getBox(parentId);
 
-        const parent =
-            getBox(parentId);
+        if (!parent) return false;
 
-        if (!parent) {
-            return false;
-        }
+        const parentRect = getAbsoluteRect(parent);
 
-        const parentRect =
-            getAbsoluteRect(parent);
-
-        if (
-            !contains(
-                parentRect,
-                test
-            )
-        ) {
+        if (!contains(parentRect, test)) {
             return false;
         }
     }
-
-
-    /* Sibling collisions */
 
     for (const other of boxes) {
+        if (other.id === box.id) continue;
+        if (other.parentId !== parentId) continue;
 
-        if (
-            other.id === box.id
-        ) {
-            continue;
-        }
-
-        if (
-            other.parentId !==
-            parentId
-        ) {
-            continue;
-        }
-
-        const otherRect =
-            getAbsoluteRect(other);
-
-        if (
-            overlaps(
-                test,
-                otherRect
-            )
-        ) {
+        if (overlaps(test, getAbsoluteRect(other))) {
             return false;
         }
     }
 
-
     return true;
 }
 
-
-/* =========================================================
-   CAN A PARENT BE RESIZED?
-========================================================= */
-
-function canResizeParent(
-    box,
-    newAbsoluteRect
-) {
-
-    const children =
-        getChildren(box.id);
+function canResizeParent(box, newAbsoluteRect) {
+    const children = getChildren(box.id);
 
     for (const child of children) {
-
-        const childRect =
-            getAbsoluteRect(child);
-
-        if (
-            !contains(
-                newAbsoluteRect,
-                childRect
-            )
-        ) {
+        if (!contains(newAbsoluteRect, getAbsoluteRect(child))) {
             return false;
         }
     }
 
     return true;
 }
-
 
 /* =========================================================
    COLORS
 ========================================================= */
-
 function currentHue() {
-
-    return (
-        210 +
-        Number(hueSlider.value) * 1.5
-    );
+    return 210 + Number(hueSlider.value) * 1.5;
 }
 
-
 function getBoxColor(box) {
-
-    const hue =
-        currentHue();
+    const hue = currentHue();
 
     switch (box.colorRole) {
-
         case "secondary":
             return `hsl(${hue},45%,78%)`;
-
         case "accent":
             return `hsl(${hue},70%,55%)`;
-
         case "custom":
             return box.customColor;
-
         default:
             return `hsl(${hue},30%,90%)`;
     }
 }
 
-
 function contrastColor(hex) {
+    const value = String(hex || "#8aa8c8").replace("#", "");
 
-    const value =
-        hex.replace("#","");
+    if (value.length !== 6) return "#17202a";
 
-    const r =
-        parseInt(
-            value.substring(0,2),
-            16
-        );
+    const r = parseInt(value.substring(0, 2), 16);
+    const g = parseInt(value.substring(2, 4), 16);
+    const b = parseInt(value.substring(4, 6), 16);
 
-    const g =
-        parseInt(
-            value.substring(2,4),
-            16
-        );
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
 
-    const b =
-        parseInt(
-            value.substring(4,6),
-            16
-        );
-
-    const brightness =
-        (r * 299 +
-         g * 587 +
-         b * 114) / 1000;
-
-    return brightness > 150
-        ? "#17202a"
-        : "#ffffff";
+    return brightness > 150 ? "#17202a" : "#ffffff";
 }
 
-
 function getBoxTextColor(box) {
-
-    if (
-        box.colorRole === "custom"
-    ) {
-        return contrastColor(
-            box.customColor
-        );
+    if (box.colorRole === "custom") {
+        return contrastColor(box.customColor);
     }
 
-    if (
-        box.colorRole === "accent"
-    ) {
+    if (box.colorRole === "accent") {
         return "#ffffff";
     }
 
     return "#17202a";
 }
 
+hueSlider.addEventListener("input", () => {
+    renderBoxes();
+    renderSidebar();
 
-hueSlider.addEventListener(
-    "input",
-    () => {
-
-        renderBoxes();
-        renderSidebar();
-
-        if (selectedBoxId) {
-            updatePropertyPanel();
-        }
+    if (selectedBoxId) {
+        updatePropertyPanel();
     }
-);
-
+});
 
 /* =========================================================
-   RENDER
+   RENDER BOXES
 ========================================================= */
 
+/*
+  IMPORTANT:
+  Every box is a direct child of the canvas.
+  Nested boxes are positioned using their ABSOLUTE position.
+  This prevents DOM nesting/re-rendering from breaking drag.
+*/
 function renderBoxes() {
+    canvas.querySelectorAll(".layout-box").forEach(element => element.remove());
 
-    canvas
-        .querySelectorAll(".layout-box")
-        .forEach(
-            element =>
-                element.remove()
-        );
-
-
-    /*
-       Parents first.
-    */
-
-    const sorted =
-        [...boxes].sort(
-            (a,b) =>
-                getDepth(a) -
-                getDepth(b)
-        );
-
+    const sorted = [...boxes].sort((a, b) => {
+        const depthDifference = getDepth(a) - getDepth(b);
+        return depthDifference || a.number - b.number;
+    });
 
     sorted.forEach(box => {
+        const element = document.createElement("div");
+        element.className = "layout-box";
+        element.dataset.id = box.id;
 
-        const element =
-            document.createElement("div");
+        const absolute = getAbsolutePosition(box);
 
-        element.className =
-            "layout-box";
-
-        element.dataset.id =
-            box.id;
-
+        element.style.left = `${absolute.x * getDisplayCellSize()}px`;
+        element.style.top = `${absolute.y * getDisplayCellSize()}px`;
+        element.style.width = `${box.width * getDisplayCellSize()}px`;
+        element.style.height = `${box.height * getDisplayCellSize()}px`;
+        element.style.background = getBoxColor(box);
+        element.style.color = getBoxTextColor(box);
 
         /*
-           IMPORTANT:
-           The box's x/y are always
-           relative to its parent.
+          Parents go behind children.
         */
-
-        element.style.left =
-            `${box.x * CELL_SIZE}px`;
-
-        element.style.top =
-            `${box.y * CELL_SIZE}px`;
-
-        element.style.width =
-            `${box.width * CELL_SIZE}px`;
-
-        element.style.height =
-            `${box.height * CELL_SIZE}px`;
-
-
-        element.style.background =
-            getBoxColor(box);
-
-        element.style.color =
-            getBoxTextColor(box);
-
-
-        if (
+        element.style.zIndex =
             box.id === selectedBoxId
-        ) {
-            element.classList.add(
-                "selected"
-            );
+                ? 1000
+                : 10 + getDepth(box);
+
+        if (box.id === selectedBoxId) {
+            element.classList.add("selected");
         }
 
-
         element.innerHTML = `
-
             <div class="box-content">
-
                 <div class="box-title">
-                    ${escapeHTML(
-                        box.label ||
-                        `Box ${box.number}`
-                    )}
+                    ${escapeHTML(box.label || `Box ${box.number}`)}
                 </div>
-
                 <div class="box-description">
-                    ${escapeHTML(
-                        box.description || ""
-                    )}
+                    ${escapeHTML(box.description || "")}
                 </div>
-
             </div>
         `;
 
-
-        if (
-            box.id === selectedBoxId
-        ) {
-
-            ["tl","tr","bl","br"]
-                .forEach(
-                    position => {
-
-                        const handle =
-                            document.createElement(
-                                "div"
-                            );
-
-                        handle.className =
-                            `resize-handle ${position}`;
-
-                        handle.dataset.handle =
-                            position;
-
-                        element.appendChild(
-                            handle
-                        );
-                    }
-                );
+        if (box.id === selectedBoxId) {
+            ["tl", "tr", "bl", "br"].forEach(position => {
+                const handle = document.createElement("div");
+                handle.className = `resize-handle ${position}`;
+                handle.dataset.handle = position;
+                element.appendChild(handle);
+            });
         }
 
+        /*
+          ONE pointerdown listener.
+          The actual move is handled by window listeners so
+          the box can never lose the drag because of rendering.
+        */
+        element.addEventListener("pointerdown", boxPointerDown);
 
-        element.addEventListener(
-            "pointerdown",
-            boxPointerDown
-        );
-
-
-        canvas.appendChild(
-            element
-        );
+        canvas.appendChild(element);
     });
 }
 
-
 function escapeHTML(value) {
-
     return String(value)
-        .replace(/&/g,"&amp;")
-        .replace(/</g,"&lt;")
-        .replace(/>/g,"&gt;")
-        .replace(/"/g,"&quot;")
-        .replace(/'/g,"&#039;");
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
-
 
 /* =========================================================
    SIDEBAR
 ========================================================= */
-
 function renderSidebar() {
-
     boxList.innerHTML = "";
 
-    if (
-        boxes.length === 0
-    ) {
-
+    if (boxes.length === 0) {
         boxList.innerHTML = `
             <div class="box-list-empty">
                 No boxes yet.<br>
-                Click <strong>+ Add Box</strong>
-                to begin.
+                Click <strong>+ Add Box</strong> to begin.
             </div>
         `;
-
         return;
     }
 
-
     boxes.forEach(box => {
+        const button = document.createElement("button");
+        button.className = "box-list-item";
 
-        const button =
-            document.createElement("button");
-
-        button.className =
-            "box-list-item";
-
-        if (
-            box.id === selectedBoxId
-        ) {
-            button.classList.add(
-                "selected"
-            );
+        if (box.id === selectedBoxId) {
+            button.classList.add("selected");
         }
 
-
-        const indent =
-            (getDepth(box) - 1) * 12;
-
-
-        button.style.paddingLeft =
-            `${8 + indent}px`;
-
+        const indent = (getDepth(box) - 1) * 12;
+        button.style.paddingLeft = `${8 + indent}px`;
 
         button.innerHTML = `
-
             <span
                 class="box-color"
-                style="
-                    background:${getBoxColor(box)}
-                "
+                style="background:${getBoxColor(box)}"
             ></span>
-
             <span class="box-list-number">
                 Box ${box.number}
             </span>
-
             <span class="box-list-label">
-                ${escapeHTML(
-                    box.label ||
-                    "Untitled"
-                )}
+                ${escapeHTML(box.label || "Untitled")}
             </span>
-
         `;
 
+        button.addEventListener("click", () => selectBox(box.id));
 
-        button.addEventListener(
-            "click",
-            () => selectBox(box.id)
-        );
-
-
-        boxList.appendChild(
-            button
-        );
+        boxList.appendChild(button);
     });
 }
 
-
 /* =========================================================
-   SELECT
+   SELECTION
 ========================================================= */
-
 function selectBox(id) {
-
     selectedBoxId = id;
-
     addMode = false;
 
-    addBoxButton.classList.remove(
-        "active"
-    );
-
-    canvas.classList.remove(
-        "add-mode"
-    );
+    addBoxButton.classList.remove("active");
+    canvas.classList.remove("add-mode");
 
     renderBoxes();
     renderSidebar();
     updatePropertyPanel();
 }
 
+function selectBoxWithoutRerender(id) {
+    selectedBoxId = id;
 
-function updatePropertyPanel() {
+    addMode = false;
+    addBoxButton.classList.remove("active");
+    canvas.classList.remove("add-mode");
 
-    const box =
-        getBox(selectedBoxId);
+    renderSidebar();
+    updatePropertyPanel();
 
-    if (!box) {
-
-        propertyPanel.classList.add(
-            "hidden"
+    /*
+      Add selected class to the EXISTING element without
+      destroying it. This is critical during pointerdown.
+    */
+    canvas.querySelectorAll(".layout-box").forEach(el => {
+        el.classList.toggle(
+            "selected",
+            el.dataset.id === id
         );
 
+        if (el.dataset.id === id) {
+            el.style.zIndex = 1000;
+        }
+    });
+}
+
+function updatePropertyPanel() {
+    const box = getBox(selectedBoxId);
+
+    if (!box) {
+        propertyPanel.classList.add("hidden");
         return;
     }
 
+    propertyPanel.classList.remove("hidden");
 
-    propertyPanel.classList.remove(
-        "hidden"
-    );
+    const layoutModeStatus = document.getElementById("layoutModeStatus");
+    const resetResponsiveButton = document.getElementById("resetResponsiveButton");
+    const hasOverride = activeDevice !== "pc" && !!getResponsiveOverride(box, activeDevice);
 
+    if (layoutModeStatus) {
+        layoutModeStatus.textContent = activeDevice === "pc"
+            ? "Using PC base layout"
+            : hasOverride
+                ? `${DEVICE_CONFIG[activeDevice].label} responsive override`
+                : `Auto from PC base layout`;
+    }
 
-    document.getElementById(
-        "labelInput"
-    ).value = box.label;
+    if (resetResponsiveButton) {
+        resetResponsiveButton.style.display = activeDevice === "pc" ? "none" : "block";
+    }
 
+    document.getElementById("labelInput").value = box.label;
+    document.getElementById("descriptionInput").value = box.description;
 
-    document.getElementById(
-        "descriptionInput"
-    ).value = box.description;
+    /*
+      Sidebar X/Y are LOCAL coordinates when nested,
+      and canvas coordinates when top-level.
+    */
+    document.getElementById("xInput").value = box.x + 1;
+    document.getElementById("yInput").value = box.y + 1;
 
-
-    document.getElementById(
-        "xInput"
-    ).value = box.x + 1;
-
-
-    document.getElementById(
-        "yInput"
-    ).value = box.y + 1;
-
-
-    document.getElementById(
-        "widthInput"
-    ).value = box.width;
-
-
-    document.getElementById(
-        "heightInput"
-    ).value = box.height;
-
+    document.getElementById("widthInput").value = box.width;
+    document.getElementById("heightInput").value = box.height;
 
     populateParentSelect(box);
 
+    document.querySelectorAll(".role-option").forEach(button => {
+        button.classList.toggle(
+            "active",
+            button.dataset.role === box.colorRole
+        );
+    });
 
-    document
-        .querySelectorAll(
-            ".role-option"
-        )
-        .forEach(button => {
+    document.getElementById("customColorRow").style.display =
+        box.colorRole === "custom" ? "flex" : "none";
 
-            button.classList.toggle(
-                "active",
-                button.dataset.role ===
-                    box.colorRole
-            );
-        });
-
-
-    document.getElementById(
-        "customColorRow"
-    ).style.display =
-        box.colorRole === "custom"
-            ? "flex"
-            : "none";
-
-
-    document.getElementById(
-        "customColorInput"
-    ).value =
-        box.customColor ||
-        "#8aa8c8";
+    document.getElementById("customColorInput").value =
+        box.customColor || "#8aa8c8";
 }
-
 
 /* =========================================================
    PARENT SELECT
 ========================================================= */
-
 function populateParentSelect(box) {
-
-    const select =
-        document.getElementById(
-            "parentInput"
-        );
-
+    const select = document.getElementById("parentInput");
     select.innerHTML = "";
 
-
-    const none =
-        document.createElement("option");
-
+    const none = document.createElement("option");
     none.value = "";
-
-    none.textContent =
-        "None (Top Level)";
-
-    select.appendChild(
-        none
-    );
-
+    none.textContent = "None (Top Level)";
+    none.selected = !box.parentId;
+    select.appendChild(none);
 
     boxes.forEach(candidate => {
+        if (candidate.id === box.id) return;
 
-        if (
-            candidate.id === box.id
-        ) {
-            return;
-        }
+        if (isDescendant(candidate.id, box.id)) return;
 
+        if (getDepth(candidate) >= MAX_DEPTH) return;
 
-        /*
-           Cannot select a descendant.
-        */
-
-        if (
-            isDescendant(
-                candidate.id,
-                box.id
-            )
-        ) {
-            return;
-        }
-
-
-        /*
-           A parent at depth 5
-           cannot accept another level.
-        */
-
-        if (
-            getDepth(candidate) >=
-            MAX_DEPTH
-        ) {
-            return;
-        }
-
-
-        const option =
-            document.createElement(
-                "option"
-            );
-
-        option.value =
-            candidate.id;
-
+        const option = document.createElement("option");
+        option.value = candidate.id;
         option.textContent =
             `Box ${candidate.number} (${candidate.label || "Untitled"})`;
 
-        if (
-            candidate.id ===
-            box.parentId
-        ) {
-            option.selected =
-                true;
-        }
+        option.selected = candidate.id === box.parentId;
 
-        select.appendChild(
-            option
-        );
+        select.appendChild(option);
     });
 }
-
 
 /* =========================================================
    PROPERTY EDITING
 ========================================================= */
-
-document.getElementById(
-    "labelInput"
-).addEventListener(
-    "input",
-    event => {
-
-        const box =
-            getBox(selectedBoxId);
-
-        if (!box) return;
-
-        box.label =
-            event.target.value;
-
-        renderBoxes();
-        renderSidebar();
-    }
-);
-
-
-document.getElementById(
-    "descriptionInput"
-).addEventListener(
-    "input",
-    event => {
-
-        const box =
-            getBox(selectedBoxId);
-
-        if (!box) return;
-
-        box.description =
-            event.target.value;
-
-        renderBoxes();
-    }
-);
-
-
-/* =========================================================
-   POSITION / SIZE EDITING
-========================================================= */
-
-function applyPropertyChange() {
-
-    const box =
-        getBox(selectedBoxId);
-
+document.getElementById("labelInput").addEventListener("input", event => {
+    const box = getBox(selectedBoxId);
     if (!box) return;
 
+    box.label = event.target.value;
+
+    /*
+      Only visual content/sidebar needs updating.
+      The box itself is NOT recreated unnecessarily.
+    */
+    const element = canvas.querySelector(
+        `[data-id="${box.id}"]`
+    );
+
+    if (element) {
+        const title = element.querySelector(".box-title");
+        if (title) {
+            title.textContent = box.label || `Box ${box.number}`;
+        }
+    }
+
+    renderSidebar();
+});
+
+document.getElementById("descriptionInput").addEventListener("input", event => {
+    const box = getBox(selectedBoxId);
+    if (!box) return;
+
+    box.description = event.target.value;
+
+    const element = canvas.querySelector(
+        `[data-id="${box.id}"]`
+    );
+
+    if (element) {
+        const description = element.querySelector(".box-description");
+        if (description) {
+            description.textContent = box.description || "";
+        }
+    }
+});
+
+function applyPropertyChange() {
+    const box = getBox(selectedBoxId);
+    if (!box) return;
 
     const newX =
-        Number(
-            document.getElementById(
-                "xInput"
-            ).value
-        ) - 1;
-
+        Number(document.getElementById("xInput").value) - 1;
 
     const newY =
-        Number(
-            document.getElementById(
-                "yInput"
-            ).value
-        ) - 1;
-
+        Number(document.getElementById("yInput").value) - 1;
 
     const newWidth =
-        Number(
-            document.getElementById(
-                "widthInput"
-            ).value
-        );
-
+        Number(document.getElementById("widthInput").value);
 
     const newHeight =
-        Number(
-            document.getElementById(
-                "heightInput"
-            ).value
-        );
-
+        Number(document.getElementById("heightInput").value);
 
     if (
         !Number.isInteger(newX) ||
         !Number.isInteger(newY) ||
         !Number.isInteger(newWidth) ||
-        !Number.isInteger(newHeight)
-    ) {
-        updatePropertyPanel();
-        return;
-    }
-
-
-    if (
+        !Number.isInteger(newHeight) ||
         newWidth < 1 ||
         newHeight < 1
     ) {
@@ -1843,643 +1808,401 @@ function applyPropertyChange() {
         return;
     }
 
-
-    /*
-       Convert the proposed local
-       position to absolute position.
-    */
-
-    let absoluteX =
-        newX;
-
-    let absoluteY =
-        newY;
-
-
-    const parent =
-        getBox(box.parentId);
-
-
-    if (parent) {
-
-        const parentAbsolute =
-            getAbsolutePosition(
-                parent
-            );
-
-        absoluteX +=
-            parentAbsolute.x;
-
-        absoluteY +=
-            parentAbsolute.y;
-    }
-
-
-    /*
-       If changing the size/position of
-       the parent, make sure its children
-       still fit.
-    */
+    const absolute = localFromAbsolute(
+        box,
+        newX,
+        newY,
+        box.parentId
+    );
 
     if (
-        !canPlace(
+        !canPlaceAbsolute(
             box,
-            absoluteX,
-            absoluteY,
+            absolute.x,
+            absolute.y,
             newWidth,
             newHeight,
             box.parentId
         )
     ) {
-
         updatePropertyPanel();
-
         return;
     }
 
+    if (
+        !canResizeParent(box, {
+            x: absolute.x,
+            y: absolute.y,
+            width: newWidth,
+            height: newHeight
+        })
+    ) {
+        updatePropertyPanel();
+        return;
+    }
 
-    const oldAbsolute =
-        getAbsolutePosition(box);
-
-
-    const dx =
-        absoluteX -
-        oldAbsolute.x;
-
-    const dy =
-        absoluteY -
-        oldAbsolute.y;
-
-
-    /*
-       If the box moves, its descendants
-       visually move with it because they
-       retain their local coordinates.
-    */
-
-
-    box.x =
-        newX;
-
-    box.y =
-        newY;
-
-    box.width =
-        newWidth;
-
-    box.height =
-        newHeight;
-
+    box.x = newX;
+    box.y = newY;
+    box.width = newWidth;
+    box.height = newHeight;
+    markLayoutOverride(box);
 
     renderBoxes();
     renderSidebar();
     updatePropertyPanel();
 }
 
-
-[
-    "xInput",
-    "yInput",
-    "widthInput",
-    "heightInput"
-].forEach(id => {
-
-    document.getElementById(id)
-        .addEventListener(
-            "change",
-            applyPropertyChange
-        );
+["xInput", "yInput", "widthInput", "heightInput"].forEach(id => {
+    document.getElementById(id).addEventListener(
+        "change",
+        applyPropertyChange
+    );
 });
-
 
 /* =========================================================
    CHANGE PARENT
 ========================================================= */
+document.getElementById("parentInput").addEventListener("change", event => {
+    const box = getBox(selectedBoxId);
+    if (!box) return;
 
-document.getElementById(
-    "parentInput"
-).addEventListener(
-    "change",
-    event => {
+    const oldParentId = box.parentId;
+    const oldX = box.x;
+    const oldY = box.y;
 
-        const box =
-            getBox(selectedBoxId);
+    const newParentId = event.target.value || null;
 
-        if (!box) return;
+    if (newParentId === oldParentId) return;
 
-
-        const newParentId =
-            event.target.value || null;
-
+    if (newParentId) {
+        const newParent = getBox(newParentId);
 
         if (
-            newParentId ===
-            box.parentId
+            !newParent ||
+            newParent.id === box.id ||
+            isDescendant(newParent.id, box.id) ||
+            getDepth(newParent) >= MAX_DEPTH
         ) {
-            return;
-        }
-
-
-        if (
-            newParentId &&
-            getDepth(
-                getBox(newParentId)
-            ) >= MAX_DEPTH
-        ) {
-
             updatePropertyPanel();
-
             return;
         }
+    }
 
+    const absolute = getAbsolutePosition(box);
+    const local = localFromAbsolute(
+        box,
+        absolute.x,
+        absolute.y,
+        newParentId
+    );
 
-        /*
-           Preserve the box's absolute
-           position when changing parent.
-        */
+    if (
+        !canPlaceAbsolute(
+            box,
+            absolute.x,
+            absolute.y,
+            box.width,
+            box.height,
+            newParentId
+        )
+    ) {
+        box.parentId = oldParentId;
+        box.x = oldX;
+        box.y = oldY;
 
-        const absolute =
-            getAbsolutePosition(box);
+        updatePropertyPanel();
+        return;
+    }
 
+    box.parentId = newParentId;
+    box.x = local.x;
+    box.y = local.y;
+    markLayoutOverride(box);
 
-        let newX =
-            absolute.x;
+    renderBoxes();
+    renderSidebar();
+    updatePropertyPanel();
+});
 
-        let newY =
-            absolute.y;
+const resetResponsiveButton = document.getElementById("resetResponsiveButton");
+if (resetResponsiveButton) {
+    resetResponsiveButton.addEventListener("click", () => {
+        const box = getBox(selectedBoxId);
+        if (!box || activeDevice === "pc") return;
 
+        ensureResponsiveModel(box);
+        box.responsiveOverrides[activeDevice] = null;
+        if (box._layoutOverrideDirty) box._layoutOverrideDirty[activeDevice] = false;
 
-        if (newParentId) {
-
-            const parent =
-                getBox(newParentId);
-
-            const parentAbsolute =
-                getAbsolutePosition(
-                    parent
-                );
-
-            newX =
-                absolute.x -
-                parentAbsolute.x;
-
-            newY =
-                absolute.y -
-                parentAbsolute.y;
-
-
-            const test = {
-
-                x: newX,
-
-                y: newY,
-
-                width: box.width,
-
-                height: box.height
-            };
-
-
-            if (
-                !contains(
-                    {
-                        x: 0,
-                        y: 0,
-                        width: parent.width,
-                        height: parent.height
-                    },
-                    test
-                )
-            ) {
-
-                updatePropertyPanel();
-
-                return;
-            }
-        }
-
-
-        box.parentId =
-            newParentId;
-
-        box.x =
-            newX;
-
-        box.y =
-            newY;
-
-
-        if (
-            !canPlace(
-                box,
-                absolute.x,
-                absolute.y,
-                box.width,
-                box.height,
-                newParentId
-            )
-        ) {
-
-            /*
-               Undo if invalid.
-            */
-
-            box.parentId =
-                box.parentId;
-
-            updatePropertyPanel();
-
-            return;
-        }
-
+        const layout = getEffectiveGeometry(box, activeDevice, {});
+        box.x = layout.x;
+        box.y = layout.y;
+        box.width = layout.width;
+        box.height = layout.height;
 
         renderBoxes();
         renderSidebar();
         updatePropertyPanel();
-    }
-);
-
+    });
+}
 
 /* =========================================================
    COLOR ROLE
 ========================================================= */
-
-document
-    .querySelectorAll(
-        ".role-option"
-    )
-    .forEach(button => {
-
-        button.addEventListener(
-            "click",
-            () => {
-
-                const box =
-                    getBox(selectedBoxId);
-
-                if (!box) return;
-
-                box.colorRole =
-                    button.dataset.role;
-
-                renderBoxes();
-                renderSidebar();
-                updatePropertyPanel();
-            }
-        );
-    });
-
-
-document.getElementById(
-    "customColorInput"
-).addEventListener(
-    "input",
-    event => {
-
-        const box =
-            getBox(selectedBoxId);
-
+document.querySelectorAll(".role-option").forEach(button => {
+    button.addEventListener("click", () => {
+        const box = getBox(selectedBoxId);
         if (!box) return;
 
-        box.colorRole =
-            "custom";
-
-        box.customColor =
-            event.target.value;
+        box.colorRole = button.dataset.role;
 
         renderBoxes();
         renderSidebar();
-    }
-);
+        updatePropertyPanel();
+    });
+});
 
+document.getElementById("customColorInput").addEventListener("input", event => {
+    const box = getBox(selectedBoxId);
+    if (!box) return;
+
+    box.colorRole = "custom";
+    box.customColor = event.target.value;
+
+    const element = canvas.querySelector(
+        `[data-id="${box.id}"]`
+    );
+
+    if (element) {
+        element.style.background = box.customColor;
+        element.style.color = getBoxTextColor(box);
+    }
+
+    renderSidebar();
+    updatePropertyPanel();
+});
 
 /* =========================================================
-   ADD BOX
+   ADD BOX MODE
 ========================================================= */
+addBoxButton.addEventListener("click", () => {
+    addMode = !addMode;
 
-addBoxButton.addEventListener(
-    "click",
-    () => {
+    addBoxButton.classList.toggle("active", addMode);
+    canvas.classList.toggle("add-mode", addMode);
 
-        addMode =
-            !addMode;
-
-        addBoxButton.classList.toggle(
-            "active",
-            addMode
-        );
-
-        canvas.classList.toggle(
-            "add-mode",
-            addMode
-        );
+    if (addMode) {
+        selectedBoxId = null;
+        renderBoxes();
+        renderSidebar();
+        updatePropertyPanel();
     }
-);
-
+});
 
 /* =========================================================
    CREATE BOX BY DRAGGING
 ========================================================= */
+canvas.addEventListener("pointerdown", event => {
+    if (!addMode) return;
 
-canvas.addEventListener(
-    "pointerdown",
-    event => {
+    /*
+      Only empty canvas starts creation.
+      Clicking an existing box is ignored.
+    */
+    if (event.target !== canvas) return;
 
-        if (!addMode) {
-            return;
-        }
+    event.preventDefault();
 
+    const rect = canvas.getBoundingClientRect();
 
-        if (
-            event.target !== canvas
-        ) {
-            return;
-        }
+    const x = clamp(
+        snapPixelsToCells(event.clientX - rect.left),
+        0,
+        GRID_COLUMNS - 1
+    );
 
+    const y = clamp(
+        snapPixelsToCells(event.clientY - rect.top),
+        0,
+        GRID_ROWS - 1
+    );
 
-        const rect =
-            canvas.getBoundingClientRect();
+    createStart = { x, y };
+    creating = true;
 
+    canvas.setPointerCapture(event.pointerId);
+});
 
-        const x =
-            clamp(
-                snap(
-                    event.clientX -
-                    rect.left
-                ),
-                0,
-                GRID_COLUMNS - 1
-            );
+canvas.addEventListener("pointermove", event => {
+    if (!creating || !createStart) return;
 
+    event.preventDefault();
+});
 
-        const y =
-            clamp(
-                snap(
-                    event.clientY -
-                    rect.top
-                ),
-                0,
-                GRID_ROWS - 1
-            );
+canvas.addEventListener("pointerup", event => {
+    if (!creating || !createStart) return;
 
+    event.preventDefault();
 
-        createStart = {
-            x,
-            y
-        };
+    creating = false;
 
-        creating = true;
-
-        canvas.setPointerCapture(
-            event.pointerId
-        );
+    if (canvas.hasPointerCapture(event.pointerId)) {
+        canvas.releasePointerCapture(event.pointerId);
     }
-);
 
+    const rect = canvas.getBoundingClientRect();
 
-canvas.addEventListener(
-    "pointerup",
-    event => {
+    const endX = clamp(
+        snapPixelsToCells(event.clientX - rect.left),
+        0,
+        GRID_COLUMNS - 1
+    );
 
-        if (!creating) {
-            return;
-        }
+    const endY = clamp(
+        snapPixelsToCells(event.clientY - rect.top),
+        0,
+        GRID_ROWS - 1
+    );
 
+    let x = Math.min(createStart.x, endX);
+    let y = Math.min(createStart.y, endY);
 
-        creating = false;
+    let width =
+        Math.abs(endX - createStart.x) + 1;
 
-        canvas.releasePointerCapture(
-            event.pointerId
-        );
+    let height =
+        Math.abs(endY - createStart.y) + 1;
 
+    width = Math.min(width, GRID_COLUMNS - x);
+    height = Math.min(height, GRID_ROWS - y);
 
-        const rect =
-            canvas.getBoundingClientRect();
+    const testBox = {
+        id: "__new__",
+        x,
+        y,
+        width,
+        height,
+        parentId: null
+    };
 
-
-        const endX =
-            clamp(
-                snap(
-                    event.clientX -
-                    rect.left
-                ),
-                0,
-                GRID_COLUMNS - 1
-            );
-
-
-        const endY =
-            clamp(
-                snap(
-                    event.clientY -
-                    rect.top
-                ),
-                0,
-                GRID_ROWS - 1
-            );
-
-
-        let x =
-            Math.min(
-                createStart.x,
-                endX
-            );
-
-
-        let y =
-            Math.min(
-                createStart.y,
-                endY
-            );
-
-
-        let width =
-            Math.abs(
-                endX -
-                createStart.x
-            ) + 1;
-
-
-        let height =
-            Math.abs(
-                endY -
-                createStart.y
-            ) + 1;
-
-
-        width =
-            Math.min(
+    const collision = boxes.some(other =>
+        overlaps(
+            {
+                x,
+                y,
                 width,
-                GRID_COLUMNS - x
-            );
+                height
+            },
+            getAbsoluteRect(other)
+        )
+    );
 
+    if (collision) {
+        alert(
+            "This box overlaps another box. Please choose a different area."
+        );
 
-        height =
-            Math.min(
-                height,
-                GRID_ROWS - y
-            );
-
-
-        pendingBox = {
-
-            x,
-            y,
-            width,
-            height
-        };
-
-
-        openModal();
+        createStart = null;
+        return;
     }
-);
 
+    pendingBox = {
+        x,
+        y,
+        width,
+        height
+    };
+
+    createStart = null;
+    openModal();
+});
+
+canvas.addEventListener("pointercancel", () => {
+    creating = false;
+    createStart = null;
+});
 
 /* =========================================================
    MODAL
 ========================================================= */
-
-let pendingBox = null;
-
-
 function openModal() {
+    document.getElementById("modalLabel").value = "";
+    document.getElementById("modalDescription").value = "";
 
-    document.getElementById(
-        "modalLabel"
-    ).value = "";
+    document.getElementById("modalOverlay")
+        .classList.remove("hidden");
 
-
-    document.getElementById(
-        "modalDescription"
-    ).value = "";
-
-
-    document.getElementById(
-        "modalOverlay"
-    ).classList.remove(
-        "hidden"
-    );
-
-
-    setTimeout(
-        () =>
-            document.getElementById(
-                "modalLabel"
-            ).focus(),
-        50
-    );
+    setTimeout(() => {
+        document.getElementById("modalLabel").focus();
+    }, 50);
 }
 
-
 function closeModal() {
-
-    document.getElementById(
-        "modalOverlay"
-    ).classList.add(
-        "hidden"
-    );
+    document.getElementById("modalOverlay")
+        .classList.add("hidden");
 
     pendingBox = null;
 }
 
+document.getElementById("cancelModal")
+    .addEventListener("click", closeModal);
 
-document.getElementById(
-    "cancelModal"
-).addEventListener(
-    "click",
-    closeModal
-);
+document.getElementById("createModal")
+    .addEventListener("click", createBox);
 
-
-document.getElementById(
-    "createModal"
-).addEventListener(
-    "click",
-    createBox
-);
-
-
-document.getElementById(
-    "modalLabel"
-).addEventListener(
-    "keydown",
-    event => {
-
-        if (
-            event.key === "Enter"
-        ) {
+document.getElementById("modalLabel")
+    .addEventListener("keydown", event => {
+        if (event.key === "Enter") {
             createBox();
         }
-    }
-);
-
+    });
 
 function createBox() {
+    if (!pendingBox) return;
 
-    if (!pendingBox) {
-        return;
-    }
-
-
-    const number =
-        nextBoxNumber++;
-
+    const number = nextBoxNumber++;
 
     const label =
-        document.getElementById(
-            "modalLabel"
-        ).value.trim();
-
+        document.getElementById("modalLabel")
+            .value.trim();
 
     const description =
-        document.getElementById(
-            "modalDescription"
-        ).value.trim();
-
+        document.getElementById("modalDescription")
+            .value.trim();
 
     const box = {
-
         id:
-            crypto.randomUUID(),
+            typeof crypto !== "undefined" &&
+            crypto.randomUUID
+                ? crypto.randomUUID()
+                : `box-${Date.now()}-${Math.random()}`,
 
         number,
 
         label:
-            label ||
-            `Box ${number}`,
+            label || `Box ${number}`,
 
         description,
 
-        x:
-            pendingBox.x,
+        x: pendingBox.x,
+        y: pendingBox.y,
 
-        y:
-            pendingBox.y,
+        width: pendingBox.width,
+        height: pendingBox.height,
 
-        width:
-            pendingBox.width,
+        parentId: null,
 
-        height:
-            pendingBox.height,
-
-        parentId:
-            null,
-
-        colorRole:
-            "primary",
-
-        customColor:
-            "#8aa8c8"
+        colorRole: "primary",
+        customColor: "#8aa8c8",
+        baseLayout: null,
+        responsiveOverrides: {
+            tablet: null,
+            mobile: null
+        }
     };
 
-
-    /*
-       Do not allow creation over
-       an existing box.
-    */
-
     if (
-        !canPlace(
+        !canPlaceAbsolute(
             box,
             box.x,
             box.y,
@@ -2488,67 +2211,66 @@ function createBox() {
             null
         )
     ) {
-
         alert(
             "This box overlaps another box. Please choose a different area."
         );
-
         return;
     }
 
-
     boxes.push(box);
+    ensureResponsiveModel(box);
+
+    if (activeDevice === "pc") {
+        box.baseLayout = geometryFromBox(box);
+    } else {
+        box.responsiveOverrides[activeDevice] = geometryFromBox(box);
+    }
+
+    ensureLayouts();
 
     closeModal();
-
     selectBox(box.id);
 }
 
-
 /* =========================================================
-   DRAGGING
+   CANVAS BOX POINTER DOWN
 ========================================================= */
-
 function boxPointerDown(event) {
+    if (addMode) return;
 
+    event.preventDefault();
     event.stopPropagation();
 
     const element =
         event.currentTarget;
 
     const box =
-        getBox(
-            element.dataset.id
-        );
+        getBox(element.dataset.id);
 
-    if (!box) {
-        return;
-    }
-
-
-    selectBox(box.id);
-
+    if (!box) return;
 
     /*
-       Resize?
+      CRITICAL FIX:
+      Do NOT call selectBox() here because selectBox()
+      re-renders and destroys the element that received
+      pointerdown.
+
+      Instead, update selection without rebuilding boxes.
     */
+    selectBoxWithoutRerender(box.id);
 
     const handle =
-        event.target.dataset.handle;
-
+        event.target.closest(".resize-handle");
 
     if (handle) {
-
         beginResize(
             event,
             box,
-            handle,
+            handle.dataset.handle,
             element
         );
-
         return;
     }
-
 
     beginDrag(
         event,
@@ -2557,88 +2279,57 @@ function boxPointerDown(event) {
     );
 }
 
-
 /* =========================================================
-   BEGIN DRAG
+   DRAGGING
 ========================================================= */
-
-function beginDrag(
-    event,
-    box,
-    element
-) {
-
-    const absolute =
-        getAbsolutePosition(box);
-
+function beginDrag(event, box, element) {
+    const absolute = getAbsolutePosition(box);
 
     interaction = {
-
         type: "drag",
-
         boxId: box.id,
+        pointerId: event.pointerId,
 
-        pointerId:
-            event.pointerId,
+        startMouseX: event.clientX,
+        startMouseY: event.clientY,
 
-        startMouseX:
-            event.clientX,
+        startAbsoluteX: absolute.x,
+        startAbsoluteY: absolute.y,
 
-        startMouseY:
-            event.clientY,
+        originalX: box.x,
+        originalY: box.y,
+        originalParentId: box.parentId,
 
-        startAbsoluteX:
-            absolute.x,
-
-        startAbsoluteY:
-            absolute.y,
-
-        originalX:
-            box.x,
-
-        originalY:
-            box.y,
-
-        originalParentId:
-            box.parentId,
+        currentParentId: box.parentId,
 
         element
     };
 
-
-    element.setPointerCapture(
-        event.pointerId
-    );
-
-
-    element.addEventListener(
+    /*
+      Listen on WINDOW.
+      This is more reliable than attaching pointermove
+      to the box itself.
+    */
+    window.addEventListener(
         "pointermove",
         handleDrag,
         { passive: false }
     );
 
-
-    element.addEventListener(
+    window.addEventListener(
         "pointerup",
         handleDragEnd,
         { once: true }
     );
 
-
-    element.addEventListener(
+    window.addEventListener(
         "pointercancel",
         handleDragEnd,
         { once: true }
     );
 }
 
-
-/* =========================================================
-   DRAG
-========================================================= */
-
 function handleDrag(event) {
-
     if (
         !interaction ||
         interaction.type !== "drag"
@@ -2646,49 +2337,33 @@ function handleDrag(event) {
         return;
     }
 
-
     event.preventDefault();
 
-
-    const box =
-        getBox(
-            interaction.boxId
-        );
-
-
-    if (!box) {
-        return;
-    }
-
+    const box = getBox(interaction.boxId);
+    if (!box) return;
 
     const dx =
-        snap(
+        snapPixelsToCells(
             event.clientX -
             interaction.startMouseX
         );
 
-
     const dy =
-        snap(
+        snapPixelsToCells(
             event.clientY -
             interaction.startMouseY
         );
 
-
     const newAbsoluteX =
-        interaction.startAbsoluteX +
-        dx;
-
+        interaction.startAbsoluteX + dx;
 
     const newAbsoluteY =
-        interaction.startAbsoluteY +
-        dy;
-
+        interaction.startAbsoluteY + dy;
 
     /*
-       Check for a potential parent.
+      Determine whether the box is completely inside
+      another box. Pick the deepest valid parent.
     */
-
     const targetParent =
         findParentForRect(
             box,
@@ -2698,244 +2373,104 @@ function handleDrag(event) {
             box.height
         );
 
+    highlightParent(targetParent);
 
-    highlightParent(
-        targetParent
-    );
-
+    let proposedParent = box.parentId;
 
     /*
-       If we're hovering over another
-       box, allow the visual position
-       to move there only if it can fit.
+      If the box is completely inside another box,
+      nest it.
     */
-
-    let proposedParent =
-        box.parentId;
-
-
-    let localX =
-        newAbsoluteX;
-
-
-    let localY =
-        newAbsoluteY;
-
-
     if (
         targetParent &&
-        targetParent.id !== box.id
+        targetParent.id !== box.id &&
+        !isDescendant(targetParent.id, box.id) &&
+        getDepth(targetParent) < MAX_DEPTH
     ) {
+        proposedParent = targetParent.id;
+    } else if (!targetParent) {
+        /*
+          If a nested box is dragged completely outside
+          its current parent, allow it to become top-level.
+        */
+        if (box.parentId) {
+            const currentParent =
+                getAbsoluteRect(getBox(box.parentId));
 
-        if (
-            !isDescendant(
-                targetParent.id,
-                box.id
-            ) &&
-            getDepth(targetParent) <
-                MAX_DEPTH
-        ) {
-
-            const parentAbsolute =
-                getAbsolutePosition(
-                    targetParent
-                );
-
-
-            const candidateX =
-                newAbsoluteX -
-                parentAbsolute.x;
-
-
-            const candidateY =
-                newAbsoluteY -
-                parentAbsolute.y;
-
-
-            const candidate = {
-
-                x:
-                    candidateX,
-
-                y:
-                    candidateY,
-
-                width:
-                    box.width,
-
-                height:
-                    box.height
+            const testRect = {
+                x: newAbsoluteX,
+                y: newAbsoluteY,
+                width: box.width,
+                height: box.height
             };
 
-
-            const parentBounds = {
-
-                x: 0,
-
-                y: 0,
-
-                width:
-                    targetParent.width,
-
-                height:
-                    targetParent.height
-            };
-
-
-            if (
-                contains(
-                    parentBounds,
-                    candidate
-                )
-            ) {
-
-                proposedParent =
-                    targetParent.id;
-
-                localX =
-                    candidateX;
-
-                localY =
-                    candidateY;
+            if (!contains(currentParent, testRect)) {
+                proposedParent = null;
             }
         }
     }
 
+    /*
+      Convert absolute coordinates into the coordinates
+      required by the proposed parent.
+    */
+    const local =
+        localFromAbsolute(
+            box,
+            newAbsoluteX,
+            newAbsoluteY,
+            proposedParent
+        );
 
     /*
-       If not nesting, keep the current
-       parent and convert absolute
-       coordinates to local coordinates.
+      Validate before changing the model.
     */
-
     if (
-        proposedParent ===
-        box.parentId
-    ) {
-
-        const parent =
-            getBox(
-                box.parentId
-            );
-
-
-        if (parent) {
-
-            const parentAbsolute =
-                getAbsolutePosition(
-                    parent
-                );
-
-            localX =
-                newAbsoluteX -
-                parentAbsolute.x;
-
-            localY =
-                newAbsoluteY -
-                parentAbsolute.y;
-        }
-    }
-
-
-    /*
-       Validate placement against siblings.
-    */
-
-    const valid =
-        canPlaceAbsolute(
+        !canPlaceAbsolute(
             box,
             newAbsoluteX,
             newAbsoluteY,
             box.width,
             box.height,
             proposedParent
-        );
-
-
-    if (!valid) {
-
+        )
+    ) {
         return;
     }
 
+    box.parentId = proposedParent;
+    box.x = local.x;
+    box.y = local.y;
+
+    interaction.currentParentId = proposedParent;
 
     /*
-       Temporarily update the model,
-       but DON'T re-render the DOM.
+      CRITICAL:
+      Move the EXISTING DOM element.
+      Do NOT renderBoxes() here.
     */
+    interaction.element.style.left =
+        `${newAbsoluteX * getDisplayCellSize()}px`;
 
-    box.parentId =
-        proposedParent;
-
-    box.x =
-        localX;
-
-    box.y =
-        localY;
-
-
-    /*
-       Move the existing DOM element.
-       This is what fixes the original
-       dragging bug.
-    */
-
-    element.style.left =
-        `${localX * CELL_SIZE}px`;
-
-    element.style.top =
-        `${localY * CELL_SIZE}px`;
-
-
-    /*
-       If parent changed, the DOM hierarchy
-       needs to change. In that case,
-       re-render once.
-    */
-
-    if (
-        proposedParent !==
-        interaction.originalParentId
-    ) {
-
-        renderBoxes();
-        renderSidebar();
-        updatePropertyPanel();
-
-        interaction.originalParentId =
-            proposedParent;
-    }
+    interaction.element.style.top =
+        `${newAbsoluteY * getDisplayCellSize()}px`;
 }
 
-
-/* =========================================================
-   DRAG END
-========================================================= */
-
 function handleDragEnd() {
+    if (!interaction) return;
 
-    if (!interaction) {
-        return;
-    }
-
+    window.removeEventListener(
+        "pointermove",
+        handleDrag
+    );
 
     clearParentHighlight();
 
-
-    const box =
-        getBox(
-            interaction.boxId
-        );
-
+    const box = getBox(interaction.boxId);
 
     if (box) {
-
-        /*
-           Final validation.
-        */
-
         const absolute =
             getAbsolutePosition(box);
-
 
         if (
             !canPlaceAbsolute(
@@ -2947,12 +2482,6 @@ function handleDragEnd() {
                 box.parentId
             )
         ) {
-
-            /*
-               Restore original position
-               if something became invalid.
-            */
-
             box.parentId =
                 interaction.originalParentId;
 
@@ -2964,20 +2493,21 @@ function handleDragEnd() {
         }
     }
 
+    if (box) markLayoutOverride(box);
 
     interaction = null;
 
-
+    /*
+      Safe to render AFTER the pointer interaction is over.
+    */
     renderBoxes();
     renderSidebar();
     updatePropertyPanel();
 }
 
-
 /* =========================================================
    FIND PARENT
 ========================================================= */
-
 function findParentForRect(
     box,
     absoluteX,
@@ -2985,326 +2515,116 @@ function findParentForRect(
     width,
     height
 ) {
-
     const test = {
-
-        x:
-            absoluteX,
-
-        y:
-            absoluteY,
-
+        x: absoluteX,
+        y: absoluteY,
         width,
-
         height
     };
 
-
     let best = null;
 
-
     boxes.forEach(candidate => {
+        if (candidate.id === box.id) return;
 
-        if (
-            candidate.id ===
-            box.id
-        ) {
-            return;
-        }
+        if (isDescendant(candidate.id, box.id)) return;
 
-
-        if (
-            isDescendant(
-                candidate.id,
-                box.id
-            )
-        ) {
-            return;
-        }
-
-
-        if (
-            getDepth(candidate) >=
-            MAX_DEPTH
-        ) {
-            return;
-        }
-
+        if (getDepth(candidate) >= MAX_DEPTH) return;
 
         const candidateRect =
-            getAbsoluteRect(
-                candidate
-            );
+            getAbsoluteRect(candidate);
 
-
-        if (
-            contains(
-                candidateRect,
-                test
-            )
-        ) {
-
+        if (contains(candidateRect, test)) {
             if (
                 !best ||
-                getDepth(candidate) >
-                    getDepth(best)
+                getDepth(candidate) > getDepth(best)
             ) {
-
-                best =
-                    candidate;
+                best = candidate;
             }
         }
     });
 
-
     return best;
 }
 
-
 function highlightParent(box) {
-
-    canvas
-        .querySelectorAll(
-            ".parent-target"
-        )
-        .forEach(
-            element =>
-                element.classList.remove(
-                    "parent-target"
-                )
+    canvas.querySelectorAll(".parent-target")
+        .forEach(element =>
+            element.classList.remove("parent-target")
         );
 
-
-    if (!box) {
-        return;
-    }
-
+    if (!box) return;
 
     const element =
         canvas.querySelector(
             `[data-id="${box.id}"]`
         );
 
-
     if (element) {
-
-        element.classList.add(
-            "parent-target"
-        );
+        element.classList.add("parent-target");
     }
 }
-
 
 function clearParentHighlight() {
-
-    canvas
-        .querySelectorAll(
-            ".parent-target"
-        )
-        .forEach(
-            element =>
-                element.classList.remove(
-                    "parent-target"
-                )
+    canvas.querySelectorAll(".parent-target")
+        .forEach(element =>
+            element.classList.remove("parent-target")
         );
 }
-
-
-/* =========================================================
-   ABSOLUTE PLACEMENT VALIDATION
-========================================================= */
-
-function canPlaceAbsolute(
-    box,
-    absoluteX,
-    absoluteY,
-    width,
-    height,
-    parentId
-) {
-
-    const test = {
-
-        x:
-            absoluteX,
-
-        y:
-            absoluteY,
-
-        width,
-
-        height
-    };
-
-
-    /*
-       Canvas bounds.
-    */
-
-    if (
-        absoluteX < 0 ||
-        absoluteY < 0 ||
-        absoluteX + width >
-            GRID_COLUMNS ||
-        absoluteY + height >
-            GRID_ROWS
-    ) {
-        return false;
-    }
-
-
-    /*
-       Parent bounds.
-    */
-
-    if (parentId) {
-
-        const parent =
-            getBox(parentId);
-
-
-        if (!parent) {
-            return false;
-        }
-
-
-        const parentRect =
-            getAbsoluteRect(
-                parent
-            );
-
-
-        if (
-            !contains(
-                parentRect,
-                test
-            )
-        ) {
-            return false;
-        }
-    }
-
-
-    /*
-       Sibling collision.
-    */
-
-    for (const other of boxes) {
-
-        if (
-            other.id === box.id
-        ) {
-            continue;
-        }
-
-
-        if (
-            other.parentId !==
-            parentId
-        ) {
-            continue;
-        }
-
-
-        const otherRect =
-            getAbsoluteRect(
-                other
-            );
-
-
-        if (
-            overlaps(
-                test,
-                otherRect
-            )
-        ) {
-            return false;
-        }
-    }
-
-
-    return true;
-}
-
 
 /* =========================================================
    RESIZING
 ========================================================= */
-
 function beginResize(
     event,
     box,
     handle,
     element
 ) {
-
     const absolute =
         getAbsolutePosition(box);
 
-
     interaction = {
-
         type: "resize",
-
-        boxId:
-            box.id,
-
+        boxId: box.id,
         handle,
+        pointerId: event.pointerId,
 
-        pointerId:
-            event.pointerId,
+        startMouseX: event.clientX,
+        startMouseY: event.clientY,
 
-        startMouseX:
-            event.clientX,
+        startX: absolute.x,
+        startY: absolute.y,
 
-        startMouseY:
-            event.clientY,
+        startWidth: box.width,
+        startHeight: box.height,
 
-        startX:
-            absolute.x,
-
-        startY:
-            absolute.y,
-
-        startWidth:
-            box.width,
-
-        startHeight:
-            box.height,
+        originalX: box.x,
+        originalY: box.y,
 
         element
     };
 
-
-    element.setPointerCapture(
-        event.pointerId
-    );
-
-
-    element.addEventListener(
+    window.addEventListener(
         "pointermove",
         handleResize,
         { passive: false }
     );
 
-
-    element.addEventListener(
+    window.addEventListener(
         "pointerup",
         handleResizeEnd,
         { once: true }
     );
 
-
-    element.addEventListener(
+    window.addEventListener(
         "pointercancel",
         handleResizeEnd,
         { once: true }
     );
 }
 
-
 function handleResize(event) {
-
     if (
         !interaction ||
         interaction.type !== "resize"
@@ -3312,154 +2632,89 @@ function handleResize(event) {
         return;
     }
 
-
     event.preventDefault();
 
-
     const box =
-        getBox(
-            interaction.boxId
-        );
+        getBox(interaction.boxId);
 
-
-    if (!box) {
-        return;
-    }
-
+    if (!box) return;
 
     const dx =
-        snap(
+        snapPixelsToCells(
             event.clientX -
             interaction.startMouseX
         );
 
-
     const dy =
-        snap(
+        snapPixelsToCells(
             event.clientY -
             interaction.startMouseY
         );
 
+    let x = interaction.startX;
+    let y = interaction.startY;
 
-    let x =
-        interaction.startX;
+    let width = interaction.startWidth;
+    let height = interaction.startHeight;
 
-    let y =
-        interaction.startY;
-
-    let width =
-        interaction.startWidth;
-
-    let height =
-        interaction.startHeight;
-
-
-    /*
-       Right edge
-    */
-
-    if (
-        interaction.handle.includes("r")
-    ) {
-
+    if (interaction.handle.includes("r")) {
         width =
-            interaction.startWidth +
-            dx;
+            interaction.startWidth + dx;
     }
 
-
-    /*
-       Left edge
-    */
-
-    if (
-        interaction.handle.includes("l")
-    ) {
-
+    if (interaction.handle.includes("l")) {
         x =
-            interaction.startX +
-            dx;
+            interaction.startX + dx;
 
         width =
-            interaction.startWidth -
-            dx;
+            interaction.startWidth - dx;
     }
 
-
-    /*
-       Bottom edge
-    */
-
-    if (
-        interaction.handle.includes("b")
-    ) {
-
+    if (interaction.handle.includes("b")) {
         height =
-            interaction.startHeight +
-            dy;
+            interaction.startHeight + dy;
     }
 
-
-    /*
-       Top edge
-    */
-
-    if (
-        interaction.handle.includes("t")
-    ) {
-
+    if (interaction.handle.includes("t")) {
         y =
-            interaction.startY +
-            dy;
+            interaction.startY + dy;
 
         height =
-            interaction.startHeight -
-            dy;
+            interaction.startHeight - dy;
     }
 
-
-    width =
-        Math.max(1, width);
-
-    height =
-        Math.max(1, height);
-
+    if (width < 1 || height < 1) return;
 
     /*
-       Parent boundary.
+      Canvas boundaries.
     */
-
     if (
-        box.parentId
+        x < 0 ||
+        y < 0 ||
+        x + width > GRID_COLUMNS ||
+        y + height > GRID_ROWS
     ) {
+        return;
+    }
 
+    /*
+      Parent boundaries.
+    */
+    if (box.parentId) {
         const parent =
             getAbsoluteRect(
-                getBox(
-                    box.parentId
-                )
+                getBox(box.parentId)
             );
-
 
         if (
             x < parent.x ||
             y < parent.y ||
-            x + width >
-                parent.x +
-                parent.width ||
-            y + height >
-                parent.y +
-                parent.height
+            x + width > parent.x + parent.width ||
+            y + height > parent.y + parent.height
         ) {
-
             return;
         }
     }
-
-
-    /*
-       Sibling collision.
-    */
 
     if (
         !canPlaceAbsolute(
@@ -3471,103 +2726,59 @@ function handleResize(event) {
             box.parentId
         )
     ) {
-
         return;
     }
 
-
-    /*
-       Children must remain inside.
-    */
-
     const newRect = {
-
         x,
-
         y,
-
         width,
-
         height
     };
 
-
-    if (
-        !canResizeParent(
-            box,
-            newRect
-        )
-    ) {
-
+    if (!canResizeParent(box, newRect)) {
         return;
     }
 
+    const local =
+        localFromAbsolute(
+            box,
+            x,
+            y,
+            box.parentId
+        );
+
+    box.x = local.x;
+    box.y = local.y;
+    box.width = width;
+    box.height = height;
 
     /*
-       Update box coordinates.
+      Update the EXISTING DOM element only.
     */
+    interaction.element.style.left =
+        `${x * getDisplayCellSize()}px`;
 
-    const parent =
-        getBox(box.parentId);
+    interaction.element.style.top =
+        `${y * getDisplayCellSize()}px`;
 
+    interaction.element.style.width =
+        `${width * getDisplayCellSize()}px`;
 
-    if (parent) {
-
-        const parentAbsolute =
-            getAbsolutePosition(
-                parent
-            );
-
-
-        box.x =
-            x -
-            parentAbsolute.x;
-
-        box.y =
-            y -
-            parentAbsolute.y;
-
-    } else {
-
-        box.x =
-            x;
-
-        box.y =
-            y;
-    }
-
-
-    box.width =
-        width;
-
-    box.height =
-        height;
-
-
-    /*
-       Update existing DOM element.
-       Don't re-render during resize.
-    */
-
-    element.style.left =
-        `${box.x * CELL_SIZE}px`;
-
-    element.style.top =
-        `${box.y * CELL_SIZE}px`;
-
-    element.style.width =
-        `${width * CELL_SIZE}px`;
-
-    element.style.height =
-        `${height * CELL_SIZE}px`;
+    interaction.element.style.height =
+        `${height * getDisplayCellSize()}px`;
 }
 
-
-/* =========================================================
-   RESIZE END
-========================================================= */
-
 function handleResizeEnd() {
+    if (!interaction) return;
+
+    window.removeEventListener(
+        "pointermove",
+        handleResize
+    );
+
+    const resizedBox = getBox(interaction.boxId);
+    if (resizedBox) markLayoutOverride(resizedBox);
 
     interaction = null;
 
@@ -3576,343 +2787,272 @@ function handleResizeEnd() {
     updatePropertyPanel();
 }
 
-
 /* =========================================================
    DELETE
 ========================================================= */
+document.addEventListener("keydown", event => {
+    const tag =
+        event.target.tagName;
 
-document.addEventListener(
-    "keydown",
-    event => {
+    if (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT"
+    ) {
+        return;
+    }
 
-        const tag =
-            event.target.tagName;
+    if (
+        (event.key === "Delete" ||
+         event.key === "Backspace") &&
+        selectedBoxId
+    ) {
+        event.preventDefault();
+        deleteBox(selectedBoxId);
+    }
 
+    if (event.key === "Escape") {
+        addMode = false;
 
-        /*
-           Don't delete while typing.
-        */
+        addBoxButton.classList.remove("active");
+        canvas.classList.remove("add-mode");
 
-        if (
-            tag === "INPUT" ||
-            tag === "TEXTAREA" ||
-            tag === "SELECT"
-        ) {
-            return;
-        }
+        closeModal();
+        clearParentHighlight();
 
-
-        if (
-            event.key === "Delete" &&
-            selectedBoxId
-        ) {
-
-            deleteBox(
-                selectedBoxId
-            );
-        }
-
-
-        if (
-            event.key === "Escape"
-        ) {
-
-            addMode = false;
-
-            addBoxButton.classList.remove(
-                "active"
-            );
-
-            canvas.classList.remove(
-                "add-mode"
-            );
-
-            closeModal();
-
-            clearParentHighlight();
+        if (interaction) {
+            interaction = null;
         }
     }
-);
-
+});
 
 function deleteBox(id) {
-
-    const ids =
-        new Set([id]);
-
-
+    const ids = new Set([id]);
     let changed = true;
 
-
     while (changed) {
-
         changed = false;
 
-
         boxes.forEach(box => {
-
             if (
                 box.parentId &&
-                ids.has(
-                    box.parentId
-                ) &&
+                ids.has(box.parentId) &&
                 !ids.has(box.id)
             ) {
-
-                ids.add(
-                    box.id
-                );
-
+                ids.add(box.id);
                 changed = true;
             }
         });
     }
 
-
     boxes =
-        boxes.filter(
-            box =>
-                !ids.has(
-                    box.id
-                )
-        );
-
+        boxes.filter(box => !ids.has(box.id));
 
     selectedBoxId = null;
-
 
     renderBoxes();
     renderSidebar();
     updatePropertyPanel();
 }
 
-
 /* =========================================================
    CANVAS SELECTION
 ========================================================= */
+canvas.addEventListener("pointerdown", event => {
+    if (
+        event.target === canvas &&
+        !addMode &&
+        !interaction
+    ) {
+        selectedBoxId = null;
 
-canvas.addEventListener(
-    "pointerdown",
-    event => {
-
-        if (
-            event.target === canvas &&
-            !addMode
-        ) {
-
-            selectedBoxId = null;
-
-            renderBoxes();
-            renderSidebar();
-            updatePropertyPanel();
-        }
+        renderBoxes();
+        renderSidebar();
+        updatePropertyPanel();
     }
-);
-
+});
 
 /* =========================================================
    COPY
 ========================================================= */
-
 function positionText(box) {
-
     const absolute =
         getAbsolutePosition(box);
-
 
     const startColumn =
         absolute.x + 1;
 
     const endColumn =
-        absolute.x +
-        box.width;
-
+        absolute.x + box.width;
 
     const startRow =
         absolute.y + 1;
 
     const endRow =
-        absolute.y +
-        box.height;
-
+        absolute.y + box.height;
 
     const columns =
         startColumn === endColumn
             ? `${startColumn}`
             : `${startColumn}-${endColumn}`;
 
-
     const rows =
         startRow === endRow
             ? `${startRow}`
             : `${startRow}-${endRow}`;
 
-
-    return (
-        `Row ${rows}, Columns ${columns}`
-    );
+    return `Row ${rows}, Columns ${columns}`;
 }
 
+function hexFromColor(color) {
+    const match = String(color || "").match(/hsl\(([-\d.]+),\s*([-\d.]+)%,\s*([-\d.]+)%\)/i);
+    if (!match) return color;
+
+    const h = ((Number(match[1]) % 360) + 360) % 360;
+    const s = Number(match[2]) / 100;
+    const l = Number(match[3]) / 100;
+    const c = (1 - Math.abs(2 * l - 1)) * s;
+    const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+    const m = l - c / 2;
+    let r = 0, g = 0, b = 0;
+
+    if (h < 60) [r,g,b] = [c,x,0];
+    else if (h < 120) [r,g,b] = [x,c,0];
+    else if (h < 180) [r,g,b] = [0,c,x];
+    else if (h < 240) [r,g,b] = [0,x,c];
+    else if (h < 300) [r,g,b] = [x,0,c];
+    else [r,g,b] = [c,0,x];
+
+    return "#" + [r,g,b]
+        .map(value => Math.round((value + m) * 255).toString(16).padStart(2, "0"))
+        .join("");
+}
+
+function colorInfo(box) {
+    let role;
+    if (box.colorRole === "primary") role = "Primary (60%)";
+    else if (box.colorRole === "secondary") role = "Secondary (30%)";
+    else if (box.colorRole === "accent") role = "Accent (10%)";
+    else role = "Custom";
+
+    const cssColor = getBoxColor(box);
+    const hex = box.colorRole === "custom" ? box.customColor : hexFromColor(cssColor);
+    return { role, hex, cssColor };
+}
+
+function layoutText(box, device) {
+    const base = getBaseGeometry(box);
+    if (device === "pc") {
+        return `X ${base.x + 1}, Y ${base.y + 1}, Width ${base.width}, Height ${base.height} (BASE)`;
+    }
+
+    const override = getResponsiveOverride(box, device);
+    const effective = getEffectiveGeometry(box, device, {});
+
+    if (override) {
+        return `X ${effective.x + 1}, Y ${effective.y + 1}, Width ${effective.width}, Height ${effective.height} (OVERRIDE)`;
+    }
+
+    return `Auto: X ${effective.x + 1}, Y ${effective.y + 1}, Width ${effective.width}, Height ${effective.height}`;
+}
 
 function generateExportText() {
+    ensureLayouts();
 
-    let text =
-        `PROJECT: ${
-            projectNameInput.value.trim() ||
-            "Untitled Project"
-        }\n\n`;
+    let text = `PROJECT: ${projectNameInput.value.trim() || "Untitled Project"}
 
+COLOR SCHEME
+Hue Slider: ${hueSlider.value}%
+Primary (60%): ${hexFromColor(`hsl(${currentHue()},30%,90%)`)}
+Secondary (30%): ${hexFromColor(`hsl(${currentHue()},45%,78%)`)}
+Accent (10%): ${hexFromColor(`hsl(${currentHue()},70%,55%)`)}
+
+RESPONSIVE BREAKPOINTS
+PC: ${DEVICE_CONFIG.pc.columns} columns × ${DEVICE_CONFIG.pc.rows} rows | Base layout | Default preview ${DEVICE_CONFIG.pc.defaultWidth}px
+Tablet: ${DEVICE_CONFIG.tablet.columns} columns × ${DEVICE_CONFIG.tablet.rows} rows | PC base unless overridden | Default preview ${DEVICE_CONFIG.tablet.defaultWidth}px
+Mobile: ${DEVICE_CONFIG.mobile.columns} columns × ${DEVICE_CONFIG.mobile.rows} rows | PC base unless overridden | Default preview ${DEVICE_CONFIG.mobile.defaultWidth}px
+Current Preview Width: ${Math.round(previewWidth)}px
+
+`;
 
     boxes.forEach(box => {
+        const parent = getBox(box.parentId);
+        const color = colorInfo(box);
 
-        const parent =
-            getBox(box.parentId);
-
-
-        let color;
-
-
-        if (
-            box.colorRole ===
-            "primary"
-        ) {
-
-            color =
-                "Primary (60%)";
-
-        } else if (
-            box.colorRole ===
-            "secondary"
-        ) {
-
-            color =
-                "Secondary (30%)";
-
-        } else if (
-            box.colorRole ===
-            "accent"
-        ) {
-
-            color =
-                "Accent (10%)";
-
-        } else {
-
-            color =
-                `Custom (${box.customColor})`;
-        }
-
-
-        text +=
-`BOX ${box.number}: ${box.label || "Untitled"}
+        text += `BOX ${box.number}: ${box.label || "Untitled"}
 Description: ${box.description || ""}
-Position: ${positionText(box)}
-Size: ${box.width} columns × ${box.height} rows
-Parent: ${
-    parent
-        ? `Box ${parent.number} (${parent.label || "Untitled"})`
-        : "None"
-}
-Color: ${color}
+Parent: ${parent ? `Box ${parent.number} (${parent.label || "Untitled"})` : "None"}
+Color Role: ${color.role}
+Color Code: ${color.hex}
+Color CSS: ${color.cssColor}
+PC Layout: ${layoutText(box, "pc")}
+Tablet Layout: ${layoutText(box, "tablet")}
+Mobile Layout: ${layoutText(box, "mobile")}
 
 `;
     });
 
-
     return text.trim();
 }
 
-
-document.getElementById(
-    "copyButton"
-).addEventListener(
-    "click",
-    async () => {
-
+document.getElementById("copyButton")
+    .addEventListener("click", async () => {
         const text =
             generateExportText();
 
-
         try {
-
-            await navigator.clipboard.writeText(
-                text
-            );
-
+            await navigator.clipboard.writeText(text);
         } catch {
-
             const textarea =
-                document.createElement(
-                    "textarea"
-                );
+                document.createElement("textarea");
 
-            textarea.value =
-                text;
-
-            document.body.appendChild(
-                textarea
-            );
-
+            textarea.value = text;
+            document.body.appendChild(textarea);
             textarea.select();
 
-            document.execCommand(
-                "copy"
-            );
+            document.execCommand("copy");
 
             textarea.remove();
         }
 
-
         const message =
-            document.getElementById(
-                "copyMessage"
-            );
+            document.getElementById("copyMessage");
 
-
-        message.classList.add(
-            "show"
-        );
-
+        message.classList.add("show");
 
         setTimeout(
-            () =>
-                message.classList.remove(
-                    "show"
-                ),
+            () => message.classList.remove("show"),
             2000
         );
-    }
-);
-
+    });
 
 /* =========================================================
    MODAL BACKDROP
 ========================================================= */
-
-document.getElementById(
-    "modalOverlay"
-).addEventListener(
-    "pointerdown",
-    event => {
-
+document.getElementById("modalOverlay")
+    .addEventListener("pointerdown", event => {
         if (
-            event.target ===
-            event.currentTarget
+            event.target === event.currentTarget
         ) {
-
             closeModal();
         }
-    }
-);
+    });
 
+/* =========================================================
+   DEVICE SWITCHER
+========================================================= */
+document.querySelectorAll(".device-button").forEach(button => {
+    button.addEventListener("click", () => {
+        if (interaction) return;
+        applyDevice(button.dataset.device);
+    });
+});
 
 /* =========================================================
    INITIAL STATE
 ========================================================= */
-
-renderBoxes();
-renderSidebar();
-
+ensureLayouts();
+applyDevice(activeDevice);
 </script>
 
 </body>
