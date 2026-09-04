@@ -12,15 +12,17 @@
 
 :root {
     --hue: 210;
-    --primary: hsl(var(--hue), 25%, 92%);
-    --secondary: hsl(var(--hue), 35%, 78%);
-    --accent: hsl(var(--hue), 75%, 52%);
-    --border: hsl(var(--hue), 20%, 55%);
+    --primary: hsl(var(--hue), 30%, 90%);
+    --secondary: hsl(var(--hue), 45%, 78%);
+    --accent: hsl(var(--hue), 70%, 55%);
     --text: #17202a;
-    --muted: #66727f;
+    --muted: #68737d;
+    --border: #aeb7bf;
+
     --sidebar-width: 270px;
     --topbar-height: 58px;
     --bottom-bar-height: 58px;
+
     --cell-size: 20px;
 }
 
@@ -32,19 +34,12 @@ body {
     overflow: hidden;
     font-family: Arial, Helvetica, sans-serif;
     color: var(--text);
-    background: #f5f6f7;
+    background: #eef0f2;
 }
 
-button,
-input,
-textarea,
-select {
-    font: inherit;
-}
-
-/* =========================
-   APP LAYOUT
-========================= */
+/* =========================================================
+   APP
+========================================================= */
 
 .app {
     display: grid;
@@ -54,80 +49,83 @@ select {
     height: 100vh;
 }
 
-/* =========================
+/* =========================================================
    TOP BAR
-========================= */
+========================================================= */
 
 .topbar {
     grid-column: 1 / -1;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 20px;
     padding: 0 16px;
     background: white;
-    border-bottom: 1px solid #d7dadd;
-    z-index: 20;
+    border-bottom: 1px solid #d4d9dd;
+    z-index: 1000;
 }
 
 .brand {
     font-weight: 700;
     font-size: 17px;
+    white-space: nowrap;
 }
 
 .project-name {
+    flex: 1;
+    max-width: 500px;
     border: 1px solid transparent;
     border-radius: 5px;
-    padding: 7px 9px;
+    padding: 8px 10px;
     font-size: 16px;
     font-weight: 600;
-    width: 320px;
 }
 
 .project-name:hover,
 .project-name:focus {
-    border-color: #c8ccd0;
+    border-color: #c5cbd0;
     outline: none;
 }
 
 .primary-button {
     border: none;
     border-radius: 6px;
-    padding: 9px 14px;
+    padding: 9px 15px;
     background: var(--accent);
     color: white;
     cursor: pointer;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .primary-button:hover {
-    filter: brightness(0.95);
+    filter: brightness(.94);
 }
 
-/* =========================
+/* =========================================================
    SIDEBAR
-========================= */
+========================================================= */
 
 .sidebar {
     grid-column: 1;
     grid-row: 2 / 4;
     display: flex;
     flex-direction: column;
-    background: #ffffff;
-    border-right: 1px solid #d7dadd;
+    background: white;
+    border-right: 1px solid #d4d9dd;
     overflow: hidden;
-    z-index: 15;
+    z-index: 500;
 }
 
 .sidebar-header {
-    padding: 16px;
-    border-bottom: 1px solid #e2e4e6;
+    padding: 14px;
+    border-bottom: 1px solid #e1e4e7;
 }
 
 .add-box-button {
     width: 100%;
-    border: 1px solid #c8ccd0;
-    border-radius: 6px;
     padding: 10px;
+    border: 1px solid #c5cbd0;
+    border-radius: 6px;
     background: white;
     cursor: pointer;
     font-weight: 600;
@@ -135,8 +133,8 @@ select {
 
 .add-box-button:hover,
 .add-box-button.active {
-    background: #f0f3f5;
     border-color: var(--accent);
+    background: hsl(var(--hue), 50%, 96%);
 }
 
 .box-list {
@@ -146,18 +144,18 @@ select {
 }
 
 .box-list-empty {
-    padding: 18px 10px;
+    padding: 15px 10px;
     color: var(--muted);
     font-size: 13px;
     line-height: 1.5;
 }
 
 .box-list-item {
+    width: 100%;
     display: flex;
     align-items: center;
-    gap: 9px;
-    width: 100%;
-    padding: 9px 10px;
+    gap: 8px;
+    padding: 9px 8px;
     margin-bottom: 3px;
     border: none;
     border-radius: 6px;
@@ -172,20 +170,20 @@ select {
 }
 
 .box-list-item.selected {
-    background: hsl(var(--hue), 65%, 93%);
+    background: hsl(var(--hue), 60%, 93%);
 }
 
 .box-color {
     width: 12px;
     height: 12px;
     border-radius: 3px;
-    flex: 0 0 auto;
-    border: 1px solid rgba(0,0,0,0.15);
+    border: 1px solid rgba(0,0,0,.2);
+    flex-shrink: 0;
 }
 
 .box-list-number {
-    font-size: 11px;
     color: var(--muted);
+    font-size: 11px;
     min-width: 38px;
 }
 
@@ -195,56 +193,53 @@ select {
     white-space: nowrap;
 }
 
-/* =========================
-   CANVAS
-========================= */
+/* =========================================================
+   CANVAS AREA
+========================================================= */
 
 .canvas-area {
     grid-column: 2;
     grid-row: 2;
     position: relative;
     overflow: auto;
-    background: #eef0f2;
 }
 
 .canvas {
     position: relative;
     width: 480px;
-    min-width: 480px;
     height: 400px;
-    min-height: 400px;
+    margin: 40px;
 
     background-color: white;
 
     background-image:
-        linear-gradient(to right, #dfe3e7 1px, transparent 1px),
-        linear-gradient(to bottom, #dfe3e7 1px, transparent 1px);
+        linear-gradient(to right, #dce1e5 1px, transparent 1px),
+        linear-gradient(to bottom, #dce1e5 1px, transparent 1px);
 
     background-size:
         var(--cell-size) var(--cell-size);
 
-    box-shadow: 0 0 0 1px #cfd4d8;
-    margin: 40px;
+    box-shadow:
+        0 0 0 1px #c8cdd1;
+
+    touch-action: none;
 }
 
 .canvas.add-mode {
     cursor: crosshair;
 }
 
-/* =========================
-   BOXES
-========================= */
+/* =========================================================
+   BOX
+========================================================= */
 
 .layout-box {
     position: absolute;
-    min-width: 20px;
-    min-height: 20px;
-    border: 2px solid var(--border);
-    border-radius: 3px;
+    border: 2px solid rgba(60,70,80,.6);
+    border-radius: 4px;
     cursor: grab;
     user-select: none;
-    overflow: visible;
-    transition: box-shadow 0.08s ease;
+    touch-action: none;
 }
 
 .layout-box:active {
@@ -259,7 +254,7 @@ select {
 
 .layout-box.parent-target {
     outline: 3px dashed var(--accent);
-    outline-offset: 2px;
+    outline-offset: 3px;
 }
 
 .box-content {
@@ -273,7 +268,6 @@ select {
 .box-title {
     font-size: 12px;
     font-weight: 700;
-    line-height: 1.2;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -283,58 +277,61 @@ select {
     margin-top: 3px;
     font-size: 9px;
     line-height: 1.2;
-    opacity: 0.75;
-    overflow: hidden;
+    opacity: .72;
 }
+
+/* =========================================================
+   RESIZE HANDLES
+========================================================= */
 
 .resize-handle {
     position: absolute;
-    width: 9px;
-    height: 9px;
+    width: 10px;
+    height: 10px;
     background: white;
     border: 2px solid var(--accent);
     border-radius: 2px;
-    z-index: 200;
-}
-
-.resize-handle.br {
-    right: -5px;
-    bottom: -5px;
-    cursor: nwse-resize;
-}
-
-.resize-handle.bl {
-    left: -5px;
-    bottom: -5px;
-    cursor: nesw-resize;
-}
-
-.resize-handle.tr {
-    right: -5px;
-    top: -5px;
-    cursor: nesw-resize;
+    z-index: 1000;
 }
 
 .resize-handle.tl {
-    left: -5px;
-    top: -5px;
+    top: -6px;
+    left: -6px;
     cursor: nwse-resize;
 }
 
-/* =========================
+.resize-handle.tr {
+    top: -6px;
+    right: -6px;
+    cursor: nesw-resize;
+}
+
+.resize-handle.bl {
+    bottom: -6px;
+    left: -6px;
+    cursor: nesw-resize;
+}
+
+.resize-handle.br {
+    bottom: -6px;
+    right: -6px;
+    cursor: nwse-resize;
+}
+
+/* =========================================================
    PROPERTY PANEL
-========================= */
+========================================================= */
 
 .property-panel {
     position: absolute;
     top: 16px;
     right: 16px;
-    width: 250px;
+    width: 270px;
+    padding: 15px;
     background: white;
-    border: 1px solid #d4d8dc;
+    border: 1px solid #d2d7db;
     border-radius: 8px;
-    box-shadow: 0 4px 18px rgba(0,0,0,0.08);
-    padding: 14px;
+    box-shadow: 0 5px 20px rgba(0,0,0,.1);
     z-index: 300;
 }
 
@@ -345,7 +342,7 @@ select {
 .panel-title {
     font-size: 14px;
     font-weight: 700;
-    margin-bottom: 12px;
+    margin-bottom: 13px;
 }
 
 .field {
@@ -364,11 +361,11 @@ select {
 .field textarea,
 .field select {
     width: 100%;
-    border: 1px solid #cfd4d8;
+    border: 1px solid #cbd1d5;
     border-radius: 5px;
     padding: 7px;
-    background: white;
     color: var(--text);
+    background: white;
 }
 
 .field textarea {
@@ -379,30 +376,23 @@ select {
 .field input:focus,
 .field textarea:focus,
 .field select:focus {
-    outline: 2px solid hsl(var(--hue), 70%, 85%);
+    outline: 2px solid hsl(var(--hue), 65%, 88%);
     border-color: var(--accent);
 }
 
-.position-grid {
+.two-column {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 7px;
 }
 
-.size-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 7px;
+.number-input {
+    width: 100%;
 }
 
-.readonly-value {
-    background: #f4f5f6 !important;
-    color: var(--muted) !important;
-}
-
-/* =========================
-   COLOR
-========================= */
+/* =========================================================
+   COLOR ROLES
+========================================================= */
 
 .color-role {
     display: grid;
@@ -411,28 +401,28 @@ select {
 }
 
 .role-option {
-    border: 1px solid #d1d5d8;
+    border: 1px solid #cbd1d5;
     border-radius: 5px;
-    padding: 6px;
-    font-size: 11px;
-    cursor: pointer;
+    padding: 7px;
     background: white;
+    cursor: pointer;
+    font-size: 11px;
 }
 
 .role-option:hover {
-    background: #f4f5f6;
+    background: #f3f5f6;
 }
 
 .role-option.active {
     border-color: var(--accent);
-    background: hsl(var(--hue), 70%, 95%);
+    background: hsl(var(--hue), 60%, 94%);
 }
 
 .custom-color-row {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-top: 7px;
+    margin-top: 8px;
 }
 
 .custom-color-row input {
@@ -441,58 +431,57 @@ select {
     padding: 2px;
 }
 
-/* =========================
+/* =========================================================
    BOTTOM BAR
-========================= */
+========================================================= */
 
 .bottom-bar {
     grid-column: 2;
     grid-row: 3;
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 12px;
     padding: 0 18px;
     background: white;
-    border-top: 1px solid #d7dadd;
-    z-index: 20;
+    border-top: 1px solid #d4d9dd;
+    z-index: 500;
 }
 
 .temperature-label {
     font-size: 12px;
     font-weight: 700;
-    white-space: nowrap;
 }
 
-.temperature-label.cool {
-    color: hsl(210, 55%, 42%);
+.cool {
+    color: #356b96;
 }
 
-.temperature-label.warm {
-    color: hsl(20, 65%, 45%);
+.warm {
+    color: #ad5b35;
 }
 
 .hue-slider {
     width: 260px;
-    cursor: pointer;
 }
 
 .hue-preview {
-    width: 80px;
+    width: 90px;
     height: 18px;
-    border-radius: 9px;
-    background: linear-gradient(
-        to right,
-        hsl(210, 70%, 55%),
-        hsl(270, 70%, 55%),
-        hsl(330, 70%, 55%),
-        hsl(30, 70%, 55%),
-        hsl(60, 70%, 55%)
-    );
+    border-radius: 10px;
+    background:
+        linear-gradient(
+            to right,
+            hsl(210,70%,55%),
+            hsl(270,70%,55%),
+            hsl(330,70%,55%),
+            hsl(30,70%,55%),
+            hsl(60,70%,55%)
+        );
 }
 
-/* =========================
+/* =========================================================
    MODAL
-========================= */
+========================================================= */
 
 .modal-overlay {
     position: fixed;
@@ -500,8 +489,8 @@ select {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(20, 25, 30, 0.35);
-    z-index: 1000;
+    background: rgba(20,25,30,.35);
+    z-index: 5000;
 }
 
 .modal-overlay.hidden {
@@ -509,12 +498,12 @@ select {
 }
 
 .modal {
-    width: 360px;
+    width: 370px;
     max-width: calc(100vw - 30px);
+    padding: 20px;
     background: white;
     border-radius: 9px;
-    padding: 20px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    box-shadow: 0 10px 40px rgba(0,0,0,.2);
 }
 
 .modal h2 {
@@ -530,59 +519,37 @@ select {
 }
 
 .secondary-button {
-    border: 1px solid #c9ced2;
+    border: 1px solid #c7cdd1;
     border-radius: 6px;
     padding: 8px 13px;
     background: white;
     cursor: pointer;
 }
 
-.secondary-button:hover {
-    background: #f3f4f5;
-}
-
-/* =========================
+/* =========================================================
    COPY MESSAGE
-========================= */
+========================================================= */
 
 .copy-message {
     position: fixed;
     top: 70px;
     right: 20px;
     padding: 9px 14px;
-    border-radius: 6px;
     background: #20262c;
     color: white;
+    border-radius: 6px;
     font-size: 13px;
     font-weight: 600;
     opacity: 0;
-    pointer-events: none;
     transform: translateY(-5px);
-    transition: opacity 0.2s, transform 0.2s;
-    z-index: 2000;
+    transition: .2s;
+    pointer-events: none;
+    z-index: 6000;
 }
 
 .copy-message.show {
     opacity: 1;
     transform: translateY(0);
-}
-
-/* =========================
-   RESPONSIVE
-========================= */
-
-@media (max-width: 800px) {
-    :root {
-        --sidebar-width: 210px;
-    }
-
-    .project-name {
-        width: 200px;
-    }
-
-    .property-panel {
-        width: 220px;
-    }
 }
 </style>
 </head>
@@ -591,231 +558,237 @@ select {
 
 <div class="app">
 
-    <!-- =========================
-         TOP BAR
-    ========================== -->
+<header class="topbar">
 
-    <header class="topbar">
+    <div class="brand">
+        Layout Planner
+    </div>
 
-        <div class="brand">
-            Layout Planner
-        </div>
+    <input
+        id="projectName"
+        class="project-name"
+        value="My Website Layout"
+        aria-label="Project name"
+    >
 
-        <input
-            id="projectName"
-            class="project-name"
-            value="My Website Layout"
-            aria-label="Project name"
-        >
+    <button
+        id="copyButton"
+        class="primary-button"
+    >
+        Copy to Clipboard
+    </button>
+
+</header>
+
+
+<aside class="sidebar">
+
+    <div class="sidebar-header">
 
         <button
-            id="copyButton"
-            class="primary-button"
+            id="addBoxButton"
+            class="add-box-button"
         >
-            Copy to Clipboard
+            + Add Box
         </button>
 
-    </header>
+    </div>
+
+    <div
+        id="boxList"
+        class="box-list"
+    ></div>
+
+</aside>
 
 
-    <!-- =========================
-         SIDEBAR
-    ========================== -->
+<main
+    id="canvasArea"
+    class="canvas-area"
+>
 
-    <aside class="sidebar">
+    <div
+        id="canvas"
+        class="canvas"
+    ></div>
 
-        <div class="sidebar-header">
+    <section
+        id="propertyPanel"
+        class="property-panel hidden"
+    >
 
-            <button
-                id="addBoxButton"
-                class="add-box-button"
-            >
-                + Add Box
-            </button>
-
+        <div class="panel-title">
+            Box Properties
         </div>
 
-        <div id="boxList" class="box-list">
-
-            <div class="box-list-empty">
-                No boxes yet.<br>
-                Click <strong>Add Box</strong> to begin.
-            </div>
-
+        <div class="field">
+            <label>Label</label>
+            <input id="labelInput" type="text">
         </div>
 
-    </aside>
+        <div class="field">
+            <label>Description</label>
+            <textarea id="descriptionInput"></textarea>
+        </div>
 
+        <div class="field">
 
-    <!-- =========================
-         CANVAS
-    ========================== -->
+            <label>Position</label>
 
-    <main id="canvasArea" class="canvas-area">
+            <div class="two-column">
 
-        <div id="canvas" class="canvas"></div>
-
-        <!-- PROPERTY PANEL -->
-
-        <section
-            id="propertyPanel"
-            class="property-panel hidden"
-        >
-
-            <div class="panel-title">
-                Box Properties
-            </div>
-
-            <div class="field">
-                <label>Label</label>
-                <input id="labelInput" type="text">
-            </div>
-
-            <div class="field">
-                <label>Description</label>
-                <textarea id="descriptionInput"></textarea>
-            </div>
-
-            <div class="field">
-
-                <label>Position</label>
-
-                <div class="position-grid">
-
+                <div>
+                    <label>X / Column</label>
                     <input
                         id="xInput"
-                        class="readonly-value"
-                        readonly
-                        placeholder="Column"
+                        type="number"
+                        min="1"
+                        max="24"
                     >
+                </div>
 
+                <div>
+                    <label>Y / Row</label>
                     <input
                         id="yInput"
-                        class="readonly-value"
-                        readonly
-                        placeholder="Row"
+                        type="number"
+                        min="1"
+                        max="20"
                     >
-
                 </div>
 
             </div>
 
-            <div class="field">
+        </div>
 
-                <label>Size</label>
+        <div class="field">
 
-                <div class="size-grid">
+            <label>Size</label>
 
+            <div class="two-column">
+
+                <div>
+                    <label>Width</label>
                     <input
                         id="widthInput"
-                        class="readonly-value"
-                        readonly
-                        placeholder="Width"
+                        type="number"
+                        min="1"
+                        max="24"
                     >
+                </div>
 
+                <div>
+                    <label>Height</label>
                     <input
                         id="heightInput"
-                        class="readonly-value"
-                        readonly
-                        placeholder="Height"
+                        type="number"
+                        min="1"
+                        max="20"
                     >
-
                 </div>
 
             </div>
 
-            <div class="field">
+        </div>
 
-                <label>Parent</label>
+        <div class="field">
+
+            <label>Parent</label>
+
+            <select id="parentInput">
+            </select>
+
+        </div>
+
+        <div class="field">
+
+            <label>Color Role</label>
+
+            <div
+                id="colorRole"
+                class="color-role"
+            >
+
+                <button
+                    class="role-option"
+                    data-role="primary"
+                >
+                    Primary
+                </button>
+
+                <button
+                    class="role-option"
+                    data-role="secondary"
+                >
+                    Secondary
+                </button>
+
+                <button
+                    class="role-option"
+                    data-role="accent"
+                >
+                    Accent
+                </button>
+
+                <button
+                    class="role-option"
+                    data-role="custom"
+                >
+                    Custom
+                </button>
+
+            </div>
+
+            <div
+                id="customColorRow"
+                class="custom-color-row"
+                style="display:none;"
+            >
+
+                <span>Custom</span>
 
                 <input
-                    id="parentInput"
-                    class="readonly-value"
-                    readonly
+                    id="customColorInput"
+                    type="color"
+                    value="#8aa8c8"
                 >
 
             </div>
 
-            <div class="field">
+        </div>
 
-                <label>Color Role</label>
+    </section>
 
-                <div id="colorRole" class="color-role">
-
-                    <button class="role-option" data-role="primary">
-                        Primary
-                    </button>
-
-                    <button class="role-option" data-role="secondary">
-                        Secondary
-                    </button>
-
-                    <button class="role-option" data-role="accent">
-                        Accent
-                    </button>
-
-                    <button class="role-option" data-role="custom">
-                        Custom
-                    </button>
-
-                </div>
-
-                <div
-                    id="customColorRow"
-                    class="custom-color-row"
-                    style="display:none;"
-                >
-
-                    <span>Custom</span>
-
-                    <input
-                        id="customColorInput"
-                        type="color"
-                        value="#8aa8c8"
-                    >
-
-                </div>
-
-            </div>
-
-        </section>
-
-    </main>
+</main>
 
 
-    <!-- =========================
-         BOTTOM BAR
-    ========================== -->
+<footer class="bottom-bar">
 
-    <footer class="bottom-bar">
+    <span class="temperature-label cool">
+        Cool
+    </span>
 
-        <span class="temperature-label cool">
-            Cool
-        </span>
+    <input
+        id="hueSlider"
+        class="hue-slider"
+        type="range"
+        min="0"
+        max="100"
+        value="0"
+    >
 
-        <input
-            id="hueSlider"
-            class="hue-slider"
-            type="range"
-            min="0"
-            max="100"
-            value="0"
-        >
+    <span class="temperature-label warm">
+        Warm
+    </span>
 
-        <span class="temperature-label warm">
-            Warm
-        </span>
+    <div class="hue-preview"></div>
 
-        <div class="hue-preview"></div>
-
-    </footer>
+</footer>
 
 </div>
 
 
-<!-- =========================
-     CREATE BOX MODAL
-========================== -->
+<!-- CREATE BOX MODAL -->
 
 <div
     id="modalOverlay"
@@ -883,24 +856,18 @@ select {
 <script>
 
 /* =========================================================
-   CONFIGURATION
+   CONFIG
 ========================================================= */
 
 const GRID_COLUMNS = 24;
 const GRID_ROWS = 20;
 const CELL_SIZE = 20;
-const MAX_NESTING_DEPTH = 5;
+const MAX_DEPTH = 5;
 
-const canvas = document.getElementById("canvas");
-const addBoxButton = document.getElementById("addBoxButton");
-const boxList = document.getElementById("boxList");
-const propertyPanel = document.getElementById("propertyPanel");
 
-const projectNameInput =
-    document.getElementById("projectName");
-
-const hueSlider =
-    document.getElementById("hueSlider");
+/* =========================================================
+   STATE
+========================================================= */
 
 let boxes = [];
 let selectedBoxId = null;
@@ -908,112 +875,40 @@ let nextBoxNumber = 1;
 
 let addMode = false;
 
-let pendingBox = null;
+let createStart = null;
+let creating = false;
 
-let dragState = null;
-let resizeState = null;
+let interaction = null;
 
 
 /* =========================================================
-   COLORS
+   ELEMENTS
 ========================================================= */
 
-function updateColorSystem() {
+const canvas =
+    document.getElementById("canvas");
 
-    const sliderValue =
-        Number(hueSlider.value);
+const canvasArea =
+    document.getElementById("canvasArea");
 
-    /*
-        0 = cool blue
-        50 = purple
-        100 = warm yellow/orange
-    */
+const boxList =
+    document.getElementById("boxList");
 
-    const hue =
-        210 + sliderValue * 1.5;
+const addBoxButton =
+    document.getElementById("addBoxButton");
 
-    document.documentElement.style
-        .setProperty("--hue", hue);
+const propertyPanel =
+    document.getElementById("propertyPanel");
 
-    renderBoxes();
-    renderSidebar();
+const projectNameInput =
+    document.getElementById("projectName");
 
-    if (selectedBoxId) {
-        updatePropertyPanel();
-    }
-}
-
-
-function getBoxColor(box) {
-
-    if (box.colorRole === "custom") {
-        return box.customColor;
-    }
-
-    const hue =
-        210 + Number(hueSlider.value) * 1.5;
-
-    if (box.colorRole === "primary") {
-        return `hsl(${hue}, 30%, 88%)`;
-    }
-
-    if (box.colorRole === "secondary") {
-        return `hsl(${hue}, 45%, 76%)`;
-    }
-
-    if (box.colorRole === "accent") {
-        return `hsl(${hue}, 70%, 58%)`;
-    }
-
-    return `hsl(${hue}, 30%, 88%)`;
-}
-
-
-function getTextColor(box) {
-
-    if (box.colorRole === "accent") {
-        return "#ffffff";
-    }
-
-    if (box.colorRole === "custom") {
-        return getContrastColor(box.customColor);
-    }
-
-    return "#17202a";
-}
-
-
-function getContrastColor(hex) {
-
-    const clean =
-        hex.replace("#", "");
-
-    const r =
-        parseInt(clean.substring(0, 2), 16);
-
-    const g =
-        parseInt(clean.substring(2, 4), 16);
-
-    const b =
-        parseInt(clean.substring(4, 6), 16);
-
-    const brightness =
-        (r * 299 + g * 587 + b * 114) / 1000;
-
-    return brightness > 150
-        ? "#17202a"
-        : "#ffffff";
-}
-
-
-hueSlider.addEventListener(
-    "input",
-    updateColorSystem
-);
+const hueSlider =
+    document.getElementById("hueSlider");
 
 
 /* =========================================================
-   CANVAS SETUP
+   CANVAS
 ========================================================= */
 
 canvas.style.width =
@@ -1024,11 +919,13 @@ canvas.style.height =
 
 
 /* =========================================================
-   HELPERS
+   BOX HELPERS
 ========================================================= */
 
 function getBox(id) {
-    return boxes.find(box => box.id === id);
+    return boxes.find(
+        box => box.id === id
+    );
 }
 
 
@@ -1039,59 +936,59 @@ function getChildren(parentId) {
 }
 
 
+function getAncestors(box) {
+
+    const result = [];
+
+    let current =
+        getBox(box.parentId);
+
+    while (current) {
+
+        result.push(current);
+
+        current =
+            getBox(current.parentId);
+    }
+
+    return result;
+}
+
+
 function getDepth(box) {
 
-    let depth = 1;
-    let current = box;
+    return getAncestors(box).length + 1;
+}
 
-    while (current.parentId) {
 
-        const parent =
+function isDescendant(
+    boxId,
+    possibleAncestorId
+) {
+
+    let current =
+        getBox(boxId);
+
+    while (current && current.parentId) {
+
+        if (
+            current.parentId ===
+            possibleAncestorId
+        ) {
+            return true;
+        }
+
+        current =
             getBox(current.parentId);
-
-        if (!parent) break;
-
-        depth++;
-        current = parent;
     }
 
-    return depth;
+    return false;
 }
 
 
-function getBoxName(box) {
-
-    if (!box) {
-        return "None";
-    }
-
-    return `${box.number} (${box.label || "Untitled"})`;
-}
-
-
-function rectsOverlap(a, b) {
-
-    return !(
-        a.x + a.width <= b.x ||
-        b.x + b.width <= a.x ||
-        a.y + a.height <= b.y ||
-        b.y + b.height <= a.y
-    );
-}
-
-
-function isInside(child, parent) {
-
-    return (
-        child.x >= parent.x &&
-        child.y >= parent.y &&
-        child.x + child.width <=
-            parent.x + parent.width &&
-        child.y + child.height <=
-            parent.y + parent.height
-    );
-}
-
+/* =========================================================
+   ABSOLUTE COORDINATES
+========================================================= */
 
 function getAbsolutePosition(box) {
 
@@ -1114,13 +1011,65 @@ function getAbsolutePosition(box) {
 }
 
 
-function snap(value) {
+function getAbsoluteRect(box) {
 
-    return Math.round(value / CELL_SIZE);
+    const position =
+        getAbsolutePosition(box);
+
+    return {
+
+        x: position.x,
+
+        y: position.y,
+
+        width: box.width,
+
+        height: box.height
+    };
 }
 
 
-function clamp(value, min, max) {
+/* =========================================================
+   GEOMETRY
+========================================================= */
+
+function overlaps(a, b) {
+
+    return (
+        a.x < b.x + b.width &&
+        a.x + a.width > b.x &&
+        a.y < b.y + b.height &&
+        a.y + a.height > b.y
+    );
+}
+
+
+function contains(parent, child) {
+
+    return (
+        child.x >= parent.x &&
+        child.y >= parent.y &&
+        child.x + child.width <=
+            parent.x + parent.width &&
+        child.y + child.height <=
+            parent.y + parent.height
+    );
+}
+
+
+function snap(value) {
+
+    return Math.round(
+        value / CELL_SIZE
+    );
+}
+
+
+function clamp(
+    value,
+    min,
+    max
+) {
 
     return Math.max(
         min,
@@ -1130,68 +1079,127 @@ function clamp(value, min, max) {
 
 
 /* =========================================================
-   COLLISION DETECTION
+   VALIDATION
 ========================================================= */
 
-function canPlaceBox(
+function canPlace(
     box,
-    newX,
-    newY,
-    newWidth = box.width,
-    newHeight = box.height,
-    newParentId = box.parentId
+    absoluteX,
+    absoluteY,
+    width,
+    height,
+    parentId
 ) {
 
     const test = {
-        x: newX,
-        y: newY,
-        width: newWidth,
-        height: newHeight
+
+        x: absoluteX,
+
+        y: absoluteY,
+
+        width,
+
+        height
     };
 
-    /*
-       Test against sibling boxes.
-    */
 
-    const siblings =
-        boxes.filter(other =>
-            other.id !== box.id &&
-            other.parentId === newParentId
-        );
+    /* Canvas boundaries */
 
-    for (const sibling of siblings) {
-
-        if (rectsOverlap(test, sibling)) {
-            return false;
-        }
+    if (
+        absoluteX < 0 ||
+        absoluteY < 0 ||
+        absoluteX + width >
+            GRID_COLUMNS ||
+        absoluteY + height >
+            GRID_ROWS
+    ) {
+        return false;
     }
 
-    /*
-       Top-level boxes must remain
-       inside the canvas.
-    */
 
-    if (!newParentId) {
+    /* Parent boundary */
 
-        if (
-            newX < 0 ||
-            newY < 0 ||
-            newX + newWidth > GRID_COLUMNS ||
-            newY + newHeight > GRID_ROWS
-        ) {
-            return false;
-        }
-
-    } else {
+    if (parentId) {
 
         const parent =
-            getBox(newParentId);
+            getBox(parentId);
 
         if (!parent) {
             return false;
         }
 
-        if (!isInside(test, parent)) {
+        const parentRect =
+            getAbsoluteRect(parent);
+
+        if (
+            !contains(
+                parentRect,
+                test
+            )
+        ) {
+            return false;
+        }
+    }
+
+
+    /* Sibling collisions */
+
+    for (const other of boxes) {
+
+        if (
+            other.id === box.id
+        ) {
+            continue;
+        }
+
+        if (
+            other.parentId !==
+            parentId
+        ) {
+            continue;
+        }
+
+        const otherRect =
+            getAbsoluteRect(other);
+
+        if (
+            overlaps(
+                test,
+                otherRect
+            )
+        ) {
+            return false;
+        }
+    }
+
+
+    return true;
+}
+
+
+/* =========================================================
+   CAN A PARENT BE RESIZED?
+========================================================= */
+
+function canResizeParent(
+    box,
+    newAbsoluteRect
+) {
+
+    const children =
+        getChildren(box.id);
+
+    for (const child of children) {
+
+        const childRect =
+            getAbsoluteRect(child);
+
+        if (
+            !contains(
+                newAbsoluteRect,
+                childRect
+            )
+        ) {
             return false;
         }
     }
@@ -1201,26 +1209,133 @@ function canPlaceBox(
 
 
 /* =========================================================
-   RENDER BOXES
+   COLORS
+========================================================= */
+
+function currentHue() {
+
+    return (
+        210 +
+        Number(hueSlider.value) * 1.5
+    );
+}
+
+
+function getBoxColor(box) {
+
+    const hue =
+        currentHue();
+
+    switch (box.colorRole) {
+
+        case "secondary":
+            return `hsl(${hue},45%,78%)`;
+
+        case "accent":
+            return `hsl(${hue},70%,55%)`;
+
+        case "custom":
+            return box.customColor;
+
+        default:
+            return `hsl(${hue},30%,90%)`;
+    }
+}
+
+
+function contrastColor(hex) {
+
+    const value =
+        hex.replace("#","");
+
+    const r =
+        parseInt(
+            value.substring(0,2),
+            16
+        );
+
+    const g =
+        parseInt(
+            value.substring(2,4),
+            16
+        );
+
+    const b =
+        parseInt(
+            value.substring(4,6),
+            16
+        );
+
+    const brightness =
+        (r * 299 +
+         g * 587 +
+         b * 114) / 1000;
+
+    return brightness > 150
+        ? "#17202a"
+        : "#ffffff";
+}
+
+
+function getBoxTextColor(box) {
+
+    if (
+        box.colorRole === "custom"
+    ) {
+        return contrastColor(
+            box.customColor
+        );
+    }
+
+    if (
+        box.colorRole === "accent"
+    ) {
+        return "#ffffff";
+    }
+
+    return "#17202a";
+}
+
+
+hueSlider.addEventListener(
+    "input",
+    () => {
+
+        renderBoxes();
+        renderSidebar();
+
+        if (selectedBoxId) {
+            updatePropertyPanel();
+        }
+    }
+);
+
+
+/* =========================================================
+   RENDER
 ========================================================= */
 
 function renderBoxes() {
 
     canvas
         .querySelectorAll(".layout-box")
-        .forEach(element =>
-            element.remove()
+        .forEach(
+            element =>
+                element.remove()
         );
 
+
     /*
-       Render parents before children.
+       Parents first.
     */
 
     const sorted =
         [...boxes].sort(
-            (a, b) =>
-                getDepth(a) - getDepth(b)
+            (a,b) =>
+                getDepth(a) -
+                getDepth(b)
         );
+
 
     sorted.forEach(box => {
 
@@ -1232,6 +1347,13 @@ function renderBoxes() {
 
         element.dataset.id =
             box.id;
+
+
+        /*
+           IMPORTANT:
+           The box's x/y are always
+           relative to its parent.
+        */
 
         element.style.left =
             `${box.x * CELL_SIZE}px`;
@@ -1245,23 +1367,22 @@ function renderBoxes() {
         element.style.height =
             `${box.height * CELL_SIZE}px`;
 
-        const color =
-            getBoxColor(box);
 
         element.style.background =
-            color;
-
-        element.style.borderColor =
-            box.colorRole === "accent"
-                ? color
-                : "rgba(50,60,70,0.55)";
+            getBoxColor(box);
 
         element.style.color =
-            getTextColor(box);
+            getBoxTextColor(box);
 
-        if (box.id === selectedBoxId) {
-            element.classList.add("selected");
+
+        if (
+            box.id === selectedBoxId
+        ) {
+            element.classList.add(
+                "selected"
+            );
         }
+
 
         element.innerHTML = `
 
@@ -1281,33 +1402,45 @@ function renderBoxes() {
                 </div>
 
             </div>
-
         `;
 
-        if (box.id === selectedBoxId) {
 
-            ["tl", "tr", "bl", "br"]
-                .forEach(position => {
+        if (
+            box.id === selectedBoxId
+        ) {
 
-                    const handle =
-                        document.createElement("div");
+            ["tl","tr","bl","br"]
+                .forEach(
+                    position => {
 
-                    handle.className =
-                        `resize-handle ${position}`;
+                        const handle =
+                            document.createElement(
+                                "div"
+                            );
 
-                    handle.dataset.handle =
-                        position;
+                        handle.className =
+                            `resize-handle ${position}`;
 
-                    element.appendChild(handle);
-                });
+                        handle.dataset.handle =
+                            position;
+
+                        element.appendChild(
+                            handle
+                        );
+                    }
+                );
         }
+
 
         element.addEventListener(
             "pointerdown",
-            handleBoxPointerDown
+            boxPointerDown
         );
 
-        canvas.appendChild(element);
+
+        canvas.appendChild(
+            element
+        );
     });
 }
 
@@ -1315,11 +1448,11 @@ function renderBoxes() {
 function escapeHTML(value) {
 
     return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
 }
 
 
@@ -1331,18 +1464,21 @@ function renderSidebar() {
 
     boxList.innerHTML = "";
 
-    if (boxes.length === 0) {
+    if (
+        boxes.length === 0
+    ) {
 
         boxList.innerHTML = `
             <div class="box-list-empty">
                 No boxes yet.<br>
-                Click <strong>Add Box</strong>
+                Click <strong>+ Add Box</strong>
                 to begin.
             </div>
         `;
 
         return;
     }
+
 
     boxes.forEach(box => {
 
@@ -1352,18 +1488,30 @@ function renderSidebar() {
         button.className =
             "box-list-item";
 
-        if (box.id === selectedBoxId) {
-            button.classList.add("selected");
+        if (
+            box.id === selectedBoxId
+        ) {
+            button.classList.add(
+                "selected"
+            );
         }
 
-        const color =
-            getBoxColor(box);
+
+        const indent =
+            (getDepth(box) - 1) * 12;
+
+
+        button.style.paddingLeft =
+            `${8 + indent}px`;
+
 
         button.innerHTML = `
 
             <span
                 class="box-color"
-                style="background:${color}"
+                style="
+                    background:${getBoxColor(box)}
+                "
             ></span>
 
             <span class="box-list-number">
@@ -1372,24 +1520,29 @@ function renderSidebar() {
 
             <span class="box-list-label">
                 ${escapeHTML(
-                    box.label || "Untitled"
+                    box.label ||
+                    "Untitled"
                 )}
             </span>
 
         `;
+
 
         button.addEventListener(
             "click",
             () => selectBox(box.id)
         );
 
-        boxList.appendChild(button);
+
+        boxList.appendChild(
+            button
+        );
     });
 }
 
 
 /* =========================================================
-   SELECTION
+   SELECT
 ========================================================= */
 
 function selectBox(id) {
@@ -1398,8 +1551,13 @@ function selectBox(id) {
 
     addMode = false;
 
-    addBoxButton.classList.remove("active");
-    canvas.classList.remove("add-mode");
+    addBoxButton.classList.remove(
+        "active"
+    );
+
+    canvas.classList.remove(
+        "add-mode"
+    );
 
     renderBoxes();
     renderSidebar();
@@ -1414,41 +1572,56 @@ function updatePropertyPanel() {
 
     if (!box) {
 
-        propertyPanel.classList.add("hidden");
+        propertyPanel.classList.add(
+            "hidden"
+        );
 
         return;
     }
 
-    propertyPanel.classList.remove("hidden");
 
-    document.getElementById("labelInput").value =
-        box.label;
+    propertyPanel.classList.remove(
+        "hidden"
+    );
 
-    document.getElementById("descriptionInput").value =
-        box.description;
 
-    document.getElementById("xInput").value =
-        `Column ${box.x + 1}`;
+    document.getElementById(
+        "labelInput"
+    ).value = box.label;
 
-    document.getElementById("yInput").value =
-        `Row ${box.y + 1}`;
 
-    document.getElementById("widthInput").value =
-        `${box.width} columns`;
+    document.getElementById(
+        "descriptionInput"
+    ).value = box.description;
 
-    document.getElementById("heightInput").value =
-        `${box.height} rows`;
 
-    const parent =
-        getBox(box.parentId);
+    document.getElementById(
+        "xInput"
+    ).value = box.x + 1;
 
-    document.getElementById("parentInput").value =
-        parent
-            ? `Box ${parent.number} (${parent.label})`
-            : "None";
+
+    document.getElementById(
+        "yInput"
+    ).value = box.y + 1;
+
+
+    document.getElementById(
+        "widthInput"
+    ).value = box.width;
+
+
+    document.getElementById(
+        "heightInput"
+    ).value = box.height;
+
+
+    populateParentSelect(box);
+
 
     document
-        .querySelectorAll(".role-option")
+        .querySelectorAll(
+            ".role-option"
+        )
         .forEach(button => {
 
             button.classList.toggle(
@@ -1458,6 +1631,7 @@ function updatePropertyPanel() {
             );
         });
 
+
     document.getElementById(
         "customColorRow"
     ).style.display =
@@ -1465,10 +1639,101 @@ function updatePropertyPanel() {
             ? "flex"
             : "none";
 
+
     document.getElementById(
         "customColorInput"
     ).value =
-        box.customColor || "#8aa8c8";
+        box.customColor ||
+        "#8aa8c8";
+}
+
+
+/* =========================================================
+   PARENT SELECT
+========================================================= */
+
+function populateParentSelect(box) {
+
+    const select =
+        document.getElementById(
+            "parentInput"
+        );
+
+    select.innerHTML = "";
+
+
+    const none =
+        document.createElement("option");
+
+    none.value = "";
+
+    none.textContent =
+        "None (Top Level)";
+
+    select.appendChild(
+        none
+    );
+
+
+    boxes.forEach(candidate => {
+
+        if (
+            candidate.id === box.id
+        ) {
+            return;
+        }
+
+
+        /*
+           Cannot select a descendant.
+        */
+
+        if (
+            isDescendant(
+                candidate.id,
+                box.id
+            )
+        ) {
+            return;
+        }
+
+
+        /*
+           A parent at depth 5
+           cannot accept another level.
+        */
+
+        if (
+            getDepth(candidate) >=
+            MAX_DEPTH
+        ) {
+            return;
+        }
+
+
+        const option =
+            document.createElement(
+                "option"
+            );
+
+        option.value =
+            candidate.id;
+
+        option.textContent =
+            `Box ${candidate.number} (${candidate.label || "Untitled"})`;
+
+        if (
+            candidate.id ===
+            box.parentId
+        ) {
+            option.selected =
+                true;
+        }
+
+        select.appendChild(
+            option
+        );
+    });
 }
 
 
@@ -1476,9 +1741,11 @@ function updatePropertyPanel() {
    PROPERTY EDITING
 ========================================================= */
 
-document
-    .getElementById("labelInput")
-    .addEventListener("input", event => {
+document.getElementById(
+    "labelInput"
+).addEventListener(
+    "input",
+    event => {
 
         const box =
             getBox(selectedBoxId);
@@ -1490,12 +1757,15 @@ document
 
         renderBoxes();
         renderSidebar();
-    });
+    }
+);
 
 
-document
-    .getElementById("descriptionInput")
-    .addEventListener("input", event => {
+document.getElementById(
+    "descriptionInput"
+).addEventListener(
+    "input",
+    event => {
 
         const box =
             getBox(selectedBoxId);
@@ -1506,11 +1776,338 @@ document
             event.target.value;
 
         renderBoxes();
-    });
+    }
+);
 
+
+/* =========================================================
+   POSITION / SIZE EDITING
+========================================================= */
+
+function applyPropertyChange() {
+
+    const box =
+        getBox(selectedBoxId);
+
+    if (!box) return;
+
+
+    const newX =
+        Number(
+            document.getElementById(
+                "xInput"
+            ).value
+        ) - 1;
+
+
+    const newY =
+        Number(
+            document.getElementById(
+                "yInput"
+            ).value
+        ) - 1;
+
+
+    const newWidth =
+        Number(
+            document.getElementById(
+                "widthInput"
+            ).value
+        );
+
+
+    const newHeight =
+        Number(
+            document.getElementById(
+                "heightInput"
+            ).value
+        );
+
+
+    if (
+        !Number.isInteger(newX) ||
+        !Number.isInteger(newY) ||
+        !Number.isInteger(newWidth) ||
+        !Number.isInteger(newHeight)
+    ) {
+        updatePropertyPanel();
+        return;
+    }
+
+
+    if (
+        newWidth < 1 ||
+        newHeight < 1
+    ) {
+        updatePropertyPanel();
+        return;
+    }
+
+
+    /*
+       Convert the proposed local
+       position to absolute position.
+    */
+
+    let absoluteX =
+        newX;
+
+    let absoluteY =
+        newY;
+
+
+    const parent =
+        getBox(box.parentId);
+
+
+    if (parent) {
+
+        const parentAbsolute =
+            getAbsolutePosition(
+                parent
+            );
+
+        absoluteX +=
+            parentAbsolute.x;
+
+        absoluteY +=
+            parentAbsolute.y;
+    }
+
+
+    /*
+       If changing the size/position of
+       the parent, make sure its children
+       still fit.
+    */
+
+    if (
+        !canPlace(
+            box,
+            absoluteX,
+            absoluteY,
+            newWidth,
+            newHeight,
+            box.parentId
+        )
+    ) {
+
+        updatePropertyPanel();
+
+        return;
+    }
+
+
+    const oldAbsolute =
+        getAbsolutePosition(box);
+
+
+    const dx =
+        absoluteX -
+        oldAbsolute.x;
+
+    const dy =
+        absoluteY -
+        oldAbsolute.y;
+
+
+    /*
+       If the box moves, its descendants
+       visually move with it because they
+       retain their local coordinates.
+    */
+
+
+    box.x =
+        newX;
+
+    box.y =
+        newY;
+
+    box.width =
+        newWidth;
+
+    box.height =
+        newHeight;
+
+
+    renderBoxes();
+    renderSidebar();
+    updatePropertyPanel();
+}
+
+
+[
+    "xInput",
+    "yInput",
+    "widthInput",
+    "heightInput"
+].forEach(id => {
+
+    document.getElementById(id)
+        .addEventListener(
+            "change",
+            applyPropertyChange
+        );
+});
+
+
+/* =========================================================
+   CHANGE PARENT
+========================================================= */
+
+document.getElementById(
+    "parentInput"
+).addEventListener(
+    "change",
+    event => {
+
+        const box =
+            getBox(selectedBoxId);
+
+        if (!box) return;
+
+
+        const newParentId =
+            event.target.value || null;
+
+
+        if (
+            newParentId ===
+            box.parentId
+        ) {
+            return;
+        }
+
+
+        if (
+            newParentId &&
+            getDepth(
+                getBox(newParentId)
+            ) >= MAX_DEPTH
+        ) {
+
+            updatePropertyPanel();
+
+            return;
+        }
+
+
+        /*
+           Preserve the box's absolute
+           position when changing parent.
+        */
+
+        const absolute =
+            getAbsolutePosition(box);
+
+
+        let newX =
+            absolute.x;
+
+        let newY =
+            absolute.y;
+
+
+        if (newParentId) {
+
+            const parent =
+                getBox(newParentId);
+
+            const parentAbsolute =
+                getAbsolutePosition(
+                    parent
+                );
+
+            newX =
+                absolute.x -
+                parentAbsolute.x;
+
+            newY =
+                absolute.y -
+                parentAbsolute.y;
+
+
+            const test = {
+
+                x: newX,
+
+                y: newY,
+
+                width: box.width,
+
+                height: box.height
+            };
+
+
+            if (
+                !contains(
+                    {
+                        x: 0,
+                        y: 0,
+                        width: parent.width,
+                        height: parent.height
+                    },
+                    test
+                )
+            ) {
+
+                updatePropertyPanel();
+
+                return;
+            }
+        }
+
+
+        box.parentId =
+            newParentId;
+
+        box.x =
+            newX;
+
+        box.y =
+            newY;
+
+
+        if (
+            !canPlace(
+                box,
+                absolute.x,
+                absolute.y,
+                box.width,
+                box.height,
+                newParentId
+            )
+        ) {
+
+            /*
+               Undo if invalid.
+            */
+
+            box.parentId =
+                box.parentId;
+
+            updatePropertyPanel();
+
+            return;
+        }
+
+
+        renderBoxes();
+        renderSidebar();
+        updatePropertyPanel();
+    }
+);
+
+
+/* =========================================================
+   COLOR ROLE
+========================================================= */
 
 document
-    .querySelectorAll(".role-option")
+    .querySelectorAll(
+        ".role-option"
+    )
     .forEach(button => {
 
         button.addEventListener(
@@ -1533,28 +2130,31 @@ document
     });
 
 
-document
-    .getElementById("customColorInput")
-    .addEventListener("input", event => {
+document.getElementById(
+    "customColorInput"
+).addEventListener(
+    "input",
+    event => {
 
         const box =
             getBox(selectedBoxId);
 
         if (!box) return;
 
-        box.customColor =
-            event.target.value;
-
         box.colorRole =
             "custom";
 
+        box.customColor =
+            event.target.value;
+
         renderBoxes();
         renderSidebar();
-    });
+    }
+);
 
 
 /* =========================================================
-   ADD BOX MODE
+   ADD BOX
 ========================================================= */
 
 addBoxButton.addEventListener(
@@ -1581,14 +2181,14 @@ addBoxButton.addEventListener(
    CREATE BOX BY DRAGGING
 ========================================================= */
 
-let createStart = null;
-let creating = false;
-
 canvas.addEventListener(
     "pointerdown",
     event => {
 
-        if (!addMode) return;
+        if (!addMode) {
+            return;
+        }
+
 
         if (
             event.target !== canvas
@@ -1596,8 +2196,10 @@ canvas.addEventListener(
             return;
         }
 
+
         const rect =
             canvas.getBoundingClientRect();
+
 
         const x =
             clamp(
@@ -1609,6 +2211,7 @@ canvas.addEventListener(
                 GRID_COLUMNS - 1
             );
 
+
         const y =
             clamp(
                 snap(
@@ -1619,7 +2222,11 @@ canvas.addEventListener(
                 GRID_ROWS - 1
             );
 
-        createStart = { x, y };
+
+        createStart = {
+            x,
+            y
+        };
 
         creating = true;
 
@@ -1631,25 +2238,13 @@ canvas.addEventListener(
 
 
 canvas.addEventListener(
-    "pointermove",
-    event => {
-
-        if (!creating) return;
-
-        /*
-           This bare-bones version creates
-           a minimum 1x1 box and lets the
-           modal define it afterward.
-        */
-    }
-);
-
-
-canvas.addEventListener(
     "pointerup",
     event => {
 
-        if (!creating) return;
+        if (!creating) {
+            return;
+        }
+
 
         creating = false;
 
@@ -1657,18 +2252,10 @@ canvas.addEventListener(
             event.pointerId
         );
 
-        const start =
-            createStart;
-
-        createStart = null;
-
-        /*
-           Determine whether the user dragged.
-           If not, create a default 4x2 box.
-        */
 
         const rect =
             canvas.getBoundingClientRect();
+
 
         const endX =
             clamp(
@@ -1680,6 +2267,7 @@ canvas.addEventListener(
                 GRID_COLUMNS - 1
             );
 
+
         const endY =
             clamp(
                 snap(
@@ -1690,32 +2278,34 @@ canvas.addEventListener(
                 GRID_ROWS - 1
             );
 
+
         let x =
-            Math.min(start.x, endX);
+            Math.min(
+                createStart.x,
+                endX
+            );
+
 
         let y =
-            Math.min(start.y, endY);
+            Math.min(
+                createStart.y,
+                endY
+            );
+
 
         let width =
-            Math.abs(endX - start.x) + 1;
+            Math.abs(
+                endX -
+                createStart.x
+            ) + 1;
+
 
         let height =
-            Math.abs(endY - start.y) + 1;
+            Math.abs(
+                endY -
+                createStart.y
+            ) + 1;
 
-        /*
-           Minimum practical size.
-        */
-
-        width =
-            Math.max(1, width);
-
-        height =
-            Math.max(1, height);
-
-        /*
-           Make sure the default box
-           remains on the canvas.
-        */
 
         width =
             Math.min(
@@ -1723,20 +2313,24 @@ canvas.addEventListener(
                 GRID_COLUMNS - x
             );
 
+
         height =
             Math.min(
                 height,
                 GRID_ROWS - y
             );
 
+
         pendingBox = {
+
             x,
             y,
             width,
             height
         };
 
-        openCreateModal();
+
+        openModal();
     }
 );
 
@@ -1745,182 +2339,247 @@ canvas.addEventListener(
    MODAL
 ========================================================= */
 
-function openCreateModal() {
+let pendingBox = null;
+
+
+function openModal() {
 
     document.getElementById(
         "modalLabel"
     ).value = "";
 
+
     document.getElementById(
         "modalDescription"
     ).value = "";
 
-    document
-        .getElementById("modalOverlay")
-        .classList.remove("hidden");
 
-    setTimeout(() => {
+    document.getElementById(
+        "modalOverlay"
+    ).classList.remove(
+        "hidden"
+    );
 
-        document
-            .getElementById("modalLabel")
-            .focus();
 
-    }, 50);
+    setTimeout(
+        () =>
+            document.getElementById(
+                "modalLabel"
+            ).focus(),
+        50
+    );
 }
 
 
 function closeModal() {
 
-    document
-        .getElementById("modalOverlay")
-        .classList.add("hidden");
+    document.getElementById(
+        "modalOverlay"
+    ).classList.add(
+        "hidden"
+    );
 
     pendingBox = null;
 }
 
 
-document
-    .getElementById("cancelModal")
-    .addEventListener(
-        "click",
-        closeModal
-    );
+document.getElementById(
+    "cancelModal"
+).addEventListener(
+    "click",
+    closeModal
+);
 
 
-document
-    .getElementById("createModal")
-    .addEventListener(
-        "click",
-        () => {
+document.getElementById(
+    "createModal"
+).addEventListener(
+    "click",
+    createBox
+);
 
-            if (!pendingBox) return;
 
-            const label =
-                document.getElementById(
-                    "modalLabel"
-                ).value.trim();
+document.getElementById(
+    "modalLabel"
+).addEventListener(
+    "keydown",
+    event => {
 
-            const description =
-                document.getElementById(
-                    "modalDescription"
-                ).value.trim();
-
-            const newBox = {
-
-                id:
-                    crypto.randomUUID(),
-
-                number:
-                    nextBoxNumber++,
-
-                label:
-                    label ||
-                    `Box ${nextBoxNumber - 1}`,
-
-                description,
-
-                x:
-                    pendingBox.x,
-
-                y:
-                    pendingBox.y,
-
-                width:
-                    pendingBox.width,
-
-                height:
-                    pendingBox.height,
-
-                parentId:
-                    null,
-
-                colorRole:
-                    "primary",
-
-                customColor:
-                    "#8aa8c8"
-            };
-
-            boxes.push(newBox);
-
-            closeModal();
-
-            selectBox(newBox.id);
+        if (
+            event.key === "Enter"
+        ) {
+            createBox();
         }
-    );
+    }
+);
 
 
-document
-    .getElementById("modalOverlay")
-    .addEventListener(
-        "pointerdown",
-        event => {
+function createBox() {
 
-            if (
-                event.target ===
-                event.currentTarget
-            ) {
-                closeModal();
-            }
-        }
-    );
+    if (!pendingBox) {
+        return;
+    }
+
+
+    const number =
+        nextBoxNumber++;
+
+
+    const label =
+        document.getElementById(
+            "modalLabel"
+        ).value.trim();
+
+
+    const description =
+        document.getElementById(
+            "modalDescription"
+        ).value.trim();
+
+
+    const box = {
+
+        id:
+            crypto.randomUUID(),
+
+        number,
+
+        label:
+            label ||
+            `Box ${number}`,
+
+        description,
+
+        x:
+            pendingBox.x,
+
+        y:
+            pendingBox.y,
+
+        width:
+            pendingBox.width,
+
+        height:
+            pendingBox.height,
+
+        parentId:
+            null,
+
+        colorRole:
+            "primary",
+
+        customColor:
+            "#8aa8c8"
+    };
+
+
+    /*
+       Do not allow creation over
+       an existing box.
+    */
+
+    if (
+        !canPlace(
+            box,
+            box.x,
+            box.y,
+            box.width,
+            box.height,
+            null
+        )
+    ) {
+
+        alert(
+            "This box overlaps another box. Please choose a different area."
+        );
+
+        return;
+    }
+
+
+    boxes.push(box);
+
+    closeModal();
+
+    selectBox(box.id);
+}
 
 
 /* =========================================================
-   DRAGGING / RESIZING
+   DRAGGING
 ========================================================= */
 
-function handleBoxPointerDown(event) {
+function boxPointerDown(event) {
 
     event.stopPropagation();
 
     const element =
         event.currentTarget;
 
-    const id =
-        element.dataset.id;
-
     const box =
-        getBox(id);
+        getBox(
+            element.dataset.id
+        );
 
-    if (!box) return;
+    if (!box) {
+        return;
+    }
 
-    selectBox(id);
+
+    selectBox(box.id);
+
 
     /*
-       Resize handle
+       Resize?
     */
 
     const handle =
         event.target.dataset.handle;
 
+
     if (handle) {
 
-        startResize(
+        beginResize(
             event,
             box,
-            handle
+            handle,
+            element
         );
 
         return;
     }
 
-    /*
-       Otherwise start dragging.
-    */
 
-    startDrag(event, box);
+    beginDrag(
+        event,
+        box,
+        element
+    );
 }
 
 
-function startDrag(event, box) {
+/* =========================================================
+   BEGIN DRAG
+========================================================= */
 
-    const rect =
-        canvas.getBoundingClientRect();
+function beginDrag(
+    event,
+    box,
+    element
+) {
 
-    dragState = {
+    const absolute =
+        getAbsolutePosition(box);
 
-        box,
+
+    interaction = {
+
+        type: "drag",
+
+        boxId: box.id,
+
+        pointerId:
+            event.pointerId,
 
         startMouseX:
             event.clientX,
@@ -1928,350 +2587,386 @@ function startDrag(event, box) {
         startMouseY:
             event.clientY,
 
-        startX:
+        startAbsoluteX:
+            absolute.x,
+
+        startAbsoluteY:
+            absolute.y,
+
+        originalX:
             box.x,
 
-        startY:
+        originalY:
             box.y,
 
-        pointerId:
-            event.pointerId
+        originalParentId:
+            box.parentId,
+
+        element
     };
 
-    event.currentTarget.setPointerCapture(
+
+    element.setPointerCapture(
         event.pointerId
     );
 
-    event.currentTarget.addEventListener(
+
+    element.addEventListener(
         "pointermove",
-        handleDragMove
+        handleDrag,
+        { passive: false }
     );
 
-    event.currentTarget.addEventListener(
+
+    element.addEventListener(
         "pointerup",
+        handleDragEnd,
+        { once: true }
+    );
+
+
+    element.addEventListener(
+        "pointercancel",
         handleDragEnd,
         { once: true }
     );
 }
 
 
-function handleDragMove(event) {
+/* =========================================================
+   DRAG
+========================================================= */
 
-    if (!dragState) return;
+function handleDrag(event) {
+
+    if (
+        !interaction ||
+        interaction.type !== "drag"
+    ) {
+        return;
+    }
+
+
+    event.preventDefault();
+
 
     const box =
-        dragState.box;
+        getBox(
+            interaction.boxId
+        );
+
+
+    if (!box) {
+        return;
+    }
+
 
     const dx =
         snap(
             event.clientX -
-            dragState.startMouseX
+            interaction.startMouseX
         );
+
 
     const dy =
         snap(
             event.clientY -
-            dragState.startMouseY
+            interaction.startMouseY
         );
 
-    const newX =
-        dragState.startX + dx;
 
-    const newY =
-        dragState.startY + dy;
+    const newAbsoluteX =
+        interaction.startAbsoluteX +
+        dx;
+
+
+    const newAbsoluteY =
+        interaction.startAbsoluteY +
+        dy;
+
 
     /*
-       Try normal movement.
+       Check for a potential parent.
     */
 
-    if (
-        canPlaceBox(
+    const targetParent =
+        findParentForRect(
             box,
-            newX,
-            newY,
+            newAbsoluteX,
+            newAbsoluteY,
             box.width,
-            box.height,
-            box.parentId
-        )
-    ) {
-
-        box.x = newX;
-        box.y = newY;
-
-        renderBoxes();
-
-        return;
-    }
-
-    /*
-       Check for a possible parent
-       when the box is moved over another box.
-    */
-
-    const target =
-        findParentAtPosition(
-            box,
-            newX,
-            newY
+            box.height
         );
 
-    highlightParent(target);
-}
 
+    highlightParent(
+        targetParent
+    );
 
-function handleDragEnd(event) {
-
-    if (!dragState) return;
-
-    const box =
-        dragState.box;
-
-    const target =
-        findParentAtPosition(
-            box,
-            box.x,
-            box.y
-        );
 
     /*
-       If the current position is inside
-       another box, try nesting.
+       If we're hovering over another
+       box, allow the visual position
+       to move there only if it can fit.
     */
+
+    let proposedParent =
+        box.parentId;
+
+
+    let localX =
+        newAbsoluteX;
+
+
+    let localY =
+        newAbsoluteY;
+
 
     if (
-        target &&
-        target.id !== box.id
+        targetParent &&
+        targetParent.id !== box.id
     ) {
 
         if (
-            getDepth(target) <
-            MAX_NESTING_DEPTH
+            !isDescendant(
+                targetParent.id,
+                box.id
+            ) &&
+            getDepth(targetParent) <
+                MAX_DEPTH
         ) {
 
-            const absolute =
-                getAbsolutePosition(box);
-
             const parentAbsolute =
-                getAbsolutePosition(target);
+                getAbsolutePosition(
+                    targetParent
+                );
 
-            const relativeX =
-                absolute.x -
+
+            const candidateX =
+                newAbsoluteX -
                 parentAbsolute.x;
 
-            const relativeY =
-                absolute.y -
+
+            const candidateY =
+                newAbsoluteY -
                 parentAbsolute.y;
 
-            const test = {
 
-                x: relativeX,
-                y: relativeY,
-                width: box.width,
-                height: box.height
+            const candidate = {
 
+                x:
+                    candidateX,
+
+                y:
+                    candidateY,
+
+                width:
+                    box.width,
+
+                height:
+                    box.height
             };
 
+
+            const parentBounds = {
+
+                x: 0,
+
+                y: 0,
+
+                width:
+                    targetParent.width,
+
+                height:
+                    targetParent.height
+            };
+
+
             if (
-                isInside(
-                    test,
-                    target
+                contains(
+                    parentBounds,
+                    candidate
                 )
             ) {
 
-                box.parentId =
-                    target.id;
+                proposedParent =
+                    targetParent.id;
 
-                box.x =
-                    relativeX;
+                localX =
+                    candidateX;
 
-                box.y =
-                    relativeY;
+                localY =
+                    candidateY;
             }
         }
     }
 
-    clearParentHighlight();
-
-    dragState = null;
-
-    renderBoxes();
-    renderSidebar();
-    updatePropertyPanel();
-}
-
-
-function startResize(
-    event,
-    box,
-    handle
-) {
-
-    resizeState = {
-
-        box,
-
-        handle,
-
-        startMouseX:
-            event.clientX,
-
-        startMouseY:
-            event.clientY,
-
-        startX:
-            box.x,
-
-        startY:
-            box.y,
-
-        startWidth:
-            box.width,
-
-        startHeight:
-            box.height
-    };
-
-    event.currentTarget.setPointerCapture(
-        event.pointerId
-    );
-
-    event.currentTarget.addEventListener(
-        "pointermove",
-        handleResizeMove
-    );
-
-    event.currentTarget.addEventListener(
-        "pointerup",
-        handleResizeEnd,
-        { once: true }
-    );
-}
-
-
-function handleResizeMove(event) {
-
-    if (!resizeState) return;
-
-    const state =
-        resizeState;
-
-    const box =
-        state.box;
-
-    const dx =
-        snap(
-            event.clientX -
-            state.startMouseX
-        );
-
-    const dy =
-        snap(
-            event.clientY -
-            state.startMouseY
-        );
-
-    let x =
-        state.startX;
-
-    let y =
-        state.startY;
-
-    let width =
-        state.startWidth;
-
-    let height =
-        state.startHeight;
-
-    if (
-        state.handle.includes("r")
-    ) {
-        width =
-            state.startWidth + dx;
-    }
-
-    if (
-        state.handle.includes("l")
-    ) {
-
-        x =
-            state.startX + dx;
-
-        width =
-            state.startWidth - dx;
-    }
-
-    if (
-        state.handle.includes("b")
-    ) {
-        height =
-            state.startHeight + dy;
-    }
-
-    if (
-        state.handle.includes("t")
-    ) {
-
-        y =
-            state.startY + dy;
-
-        height =
-            state.startHeight - dy;
-    }
-
-    width =
-        Math.max(1, width);
-
-    height =
-        Math.max(1, height);
 
     /*
-       Children must remain inside
-       a resized parent.
+       If not nesting, keep the current
+       parent and convert absolute
+       coordinates to local coordinates.
     */
 
-    const children =
-        getChildren(box.id);
+    if (
+        proposedParent ===
+        box.parentId
+    ) {
 
-    const childrenFit =
-        children.every(child => {
-
-            return (
-                child.x >= 0 &&
-                child.y >= 0 &&
-                child.x + child.width <= width &&
-                child.y + child.height <= height
+        const parent =
+            getBox(
+                box.parentId
             );
-        });
 
-    if (!childrenFit) {
+
+        if (parent) {
+
+            const parentAbsolute =
+                getAbsolutePosition(
+                    parent
+                );
+
+            localX =
+                newAbsoluteX -
+                parentAbsolute.x;
+
+            localY =
+                newAbsoluteY -
+                parentAbsolute.y;
+        }
+    }
+
+
+    /*
+       Validate placement against siblings.
+    */
+
+    const valid =
+        canPlaceAbsolute(
+            box,
+            newAbsoluteX,
+            newAbsoluteY,
+            box.width,
+            box.height,
+            proposedParent
+        );
+
+
+    if (!valid) {
+
         return;
     }
 
+
+    /*
+       Temporarily update the model,
+       but DON'T re-render the DOM.
+    */
+
+    box.parentId =
+        proposedParent;
+
+    box.x =
+        localX;
+
+    box.y =
+        localY;
+
+
+    /*
+       Move the existing DOM element.
+       This is what fixes the original
+       dragging bug.
+    */
+
+    element.style.left =
+        `${localX * CELL_SIZE}px`;
+
+    element.style.top =
+        `${localY * CELL_SIZE}px`;
+
+
+    /*
+       If parent changed, the DOM hierarchy
+       needs to change. In that case,
+       re-render once.
+    */
+
     if (
-        canPlaceBox(
-            box,
-            x,
-            y,
-            width,
-            height,
-            box.parentId
-        )
+        proposedParent !==
+        interaction.originalParentId
     ) {
 
-        box.x = x;
-        box.y = y;
-        box.width = width;
-        box.height = height;
-
         renderBoxes();
+        renderSidebar();
         updatePropertyPanel();
+
+        interaction.originalParentId =
+            proposedParent;
     }
 }
 
 
-function handleResizeEnd() {
+/* =========================================================
+   DRAG END
+========================================================= */
 
-    resizeState = null;
+function handleDragEnd() {
+
+    if (!interaction) {
+        return;
+    }
+
+
+    clearParentHighlight();
+
+
+    const box =
+        getBox(
+            interaction.boxId
+        );
+
+
+    if (box) {
+
+        /*
+           Final validation.
+        */
+
+        const absolute =
+            getAbsolutePosition(box);
+
+
+        if (
+            !canPlaceAbsolute(
+                box,
+                absolute.x,
+                absolute.y,
+                box.width,
+                box.height,
+                box.parentId
+            )
+        ) {
+
+            /*
+               Restore original position
+               if something became invalid.
+            */
+
+            box.parentId =
+                interaction.originalParentId;
+
+            box.x =
+                interaction.originalX;
+
+            box.y =
+                interaction.originalY;
+        }
+    }
+
+
+    interaction = null;
+
 
     renderBoxes();
     renderSidebar();
@@ -2280,41 +2975,43 @@ function handleResizeEnd() {
 
 
 /* =========================================================
-   NESTING HELPERS
+   FIND PARENT
 ========================================================= */
 
-function findParentAtPosition(
+function findParentForRect(
     box,
-    x,
-    y
+    absoluteX,
+    absoluteY,
+    width,
+    height
 ) {
-
-    let best = null;
 
     const test = {
 
-        x,
-        y,
+        x:
+            absoluteX,
 
-        width:
-            box.width,
+        y:
+            absoluteY,
 
-        height:
-            box.height
+        width,
+
+        height
     };
 
-    for (const candidate of boxes) {
+
+    let best = null;
+
+
+    boxes.forEach(candidate => {
 
         if (
-            candidate.id === box.id
+            candidate.id ===
+            box.id
         ) {
-            continue;
+            return;
         }
 
-        /*
-           Don't allow nesting inside
-           descendants.
-        */
 
         if (
             isDescendant(
@@ -2322,13 +3019,28 @@ function findParentAtPosition(
                 box.id
             )
         ) {
-            continue;
+            return;
         }
 
+
         if (
-            isInside(
-                test,
+            getDepth(candidate) >=
+            MAX_DEPTH
+        ) {
+            return;
+        }
+
+
+        const candidateRect =
+            getAbsoluteRect(
                 candidate
+            );
+
+
+        if (
+            contains(
+                candidateRect,
+                test
             )
         ) {
 
@@ -2342,49 +3054,37 @@ function findParentAtPosition(
                     candidate;
             }
         }
-    }
+    });
+
 
     return best;
 }
 
 
-function isDescendant(
-    possibleChildId,
-    ancestorId
-) {
-
-    let current =
-        getBox(possibleChildId);
-
-    while (current) {
-
-        if (
-            current.parentId ===
-            ancestorId
-        ) {
-            return true;
-        }
-
-        current =
-            getBox(
-                current.parentId
-            );
-    }
-
-    return false;
-}
-
-
 function highlightParent(box) {
 
-    clearParentHighlight();
+    canvas
+        .querySelectorAll(
+            ".parent-target"
+        )
+        .forEach(
+            element =>
+                element.classList.remove(
+                    "parent-target"
+                )
+        );
 
-    if (!box) return;
+
+    if (!box) {
+        return;
+    }
+
 
     const element =
         canvas.querySelector(
             `[data-id="${box.id}"]`
         );
+
 
     if (element) {
 
@@ -2401,11 +3101,479 @@ function clearParentHighlight() {
         .querySelectorAll(
             ".parent-target"
         )
-        .forEach(element =>
-            element.classList.remove(
-                "parent-target"
-            )
+        .forEach(
+            element =>
+                element.classList.remove(
+                    "parent-target"
+                )
         );
+}
+
+
+/* =========================================================
+   ABSOLUTE PLACEMENT VALIDATION
+========================================================= */
+
+function canPlaceAbsolute(
+    box,
+    absoluteX,
+    absoluteY,
+    width,
+    height,
+    parentId
+) {
+
+    const test = {
+
+        x:
+            absoluteX,
+
+        y:
+            absoluteY,
+
+        width,
+
+        height
+    };
+
+
+    /*
+       Canvas bounds.
+    */
+
+    if (
+        absoluteX < 0 ||
+        absoluteY < 0 ||
+        absoluteX + width >
+            GRID_COLUMNS ||
+        absoluteY + height >
+            GRID_ROWS
+    ) {
+        return false;
+    }
+
+
+    /*
+       Parent bounds.
+    */
+
+    if (parentId) {
+
+        const parent =
+            getBox(parentId);
+
+
+        if (!parent) {
+            return false;
+        }
+
+
+        const parentRect =
+            getAbsoluteRect(
+                parent
+            );
+
+
+        if (
+            !contains(
+                parentRect,
+                test
+            )
+        ) {
+            return false;
+        }
+    }
+
+
+    /*
+       Sibling collision.
+    */
+
+    for (const other of boxes) {
+
+        if (
+            other.id === box.id
+        ) {
+            continue;
+        }
+
+
+        if (
+            other.parentId !==
+            parentId
+        ) {
+            continue;
+        }
+
+
+        const otherRect =
+            getAbsoluteRect(
+                other
+            );
+
+
+        if (
+            overlaps(
+                test,
+                otherRect
+            )
+        ) {
+            return false;
+        }
+    }
+
+
+    return true;
+}
+
+
+/* =========================================================
+   RESIZING
+========================================================= */
+
+function beginResize(
+    event,
+    box,
+    handle,
+    element
+) {
+
+    const absolute =
+        getAbsolutePosition(box);
+
+
+    interaction = {
+
+        type: "resize",
+
+        boxId:
+            box.id,
+
+        handle,
+
+        pointerId:
+            event.pointerId,
+
+        startMouseX:
+            event.clientX,
+
+        startMouseY:
+            event.clientY,
+
+        startX:
+            absolute.x,
+
+        startY:
+            absolute.y,
+
+        startWidth:
+            box.width,
+
+        startHeight:
+            box.height,
+
+        element
+    };
+
+
+    element.setPointerCapture(
+        event.pointerId
+    );
+
+
+    element.addEventListener(
+        "pointermove",
+        handleResize,
+        { passive: false }
+    );
+
+
+    element.addEventListener(
+        "pointerup",
+        handleResizeEnd,
+        { once: true }
+    );
+
+
+    element.addEventListener(
+        "pointercancel",
+        handleResizeEnd,
+        { once: true }
+    );
+}
+
+
+function handleResize(event) {
+
+    if (
+        !interaction ||
+        interaction.type !== "resize"
+    ) {
+        return;
+    }
+
+
+    event.preventDefault();
+
+
+    const box =
+        getBox(
+            interaction.boxId
+        );
+
+
+    if (!box) {
+        return;
+    }
+
+
+    const dx =
+        snap(
+            event.clientX -
+            interaction.startMouseX
+        );
+
+
+    const dy =
+        snap(
+            event.clientY -
+            interaction.startMouseY
+        );
+
+
+    let x =
+        interaction.startX;
+
+    let y =
+        interaction.startY;
+
+    let width =
+        interaction.startWidth;
+
+    let height =
+        interaction.startHeight;
+
+
+    /*
+       Right edge
+    */
+
+    if (
+        interaction.handle.includes("r")
+    ) {
+
+        width =
+            interaction.startWidth +
+            dx;
+    }
+
+
+    /*
+       Left edge
+    */
+
+    if (
+        interaction.handle.includes("l")
+    ) {
+
+        x =
+            interaction.startX +
+            dx;
+
+        width =
+            interaction.startWidth -
+            dx;
+    }
+
+
+    /*
+       Bottom edge
+    */
+
+    if (
+        interaction.handle.includes("b")
+    ) {
+
+        height =
+            interaction.startHeight +
+            dy;
+    }
+
+
+    /*
+       Top edge
+    */
+
+    if (
+        interaction.handle.includes("t")
+    ) {
+
+        y =
+            interaction.startY +
+            dy;
+
+        height =
+            interaction.startHeight -
+            dy;
+    }
+
+
+    width =
+        Math.max(1, width);
+
+    height =
+        Math.max(1, height);
+
+
+    /*
+       Parent boundary.
+    */
+
+    if (
+        box.parentId
+    ) {
+
+        const parent =
+            getAbsoluteRect(
+                getBox(
+                    box.parentId
+                )
+            );
+
+
+        if (
+            x < parent.x ||
+            y < parent.y ||
+            x + width >
+                parent.x +
+                parent.width ||
+            y + height >
+                parent.y +
+                parent.height
+        ) {
+
+            return;
+        }
+    }
+
+
+    /*
+       Sibling collision.
+    */
+
+    if (
+        !canPlaceAbsolute(
+            box,
+            x,
+            y,
+            width,
+            height,
+            box.parentId
+        )
+    ) {
+
+        return;
+    }
+
+
+    /*
+       Children must remain inside.
+    */
+
+    const newRect = {
+
+        x,
+
+        y,
+
+        width,
+
+        height
+    };
+
+
+    if (
+        !canResizeParent(
+            box,
+            newRect
+        )
+    ) {
+
+        return;
+    }
+
+
+    /*
+       Update box coordinates.
+    */
+
+    const parent =
+        getBox(box.parentId);
+
+
+    if (parent) {
+
+        const parentAbsolute =
+            getAbsolutePosition(
+                parent
+            );
+
+
+        box.x =
+            x -
+            parentAbsolute.x;
+
+        box.y =
+            y -
+            parentAbsolute.y;
+
+    } else {
+
+        box.x =
+            x;
+
+        box.y =
+            y;
+    }
+
+
+    box.width =
+        width;
+
+    box.height =
+        height;
+
+
+    /*
+       Update existing DOM element.
+       Don't re-render during resize.
+    */
+
+    element.style.left =
+        `${box.x * CELL_SIZE}px`;
+
+    element.style.top =
+        `${box.y * CELL_SIZE}px`;
+
+    element.style.width =
+        `${width * CELL_SIZE}px`;
+
+    element.style.height =
+        `${height * CELL_SIZE}px`;
+}
+
+
+/* =========================================================
+   RESIZE END
+========================================================= */
+
+function handleResizeEnd() {
+
+    interaction = null;
+
+    renderBoxes();
+    renderSidebar();
+    updatePropertyPanel();
 }
 
 
@@ -2417,19 +3585,22 @@ document.addEventListener(
     "keydown",
     event => {
 
+        const tag =
+            event.target.tagName;
+
+
         /*
            Don't delete while typing.
         */
 
-        const tag =
-            event.target.tagName;
-
         if (
             tag === "INPUT" ||
-            tag === "TEXTAREA"
+            tag === "TEXTAREA" ||
+            tag === "SELECT"
         ) {
             return;
         }
+
 
         if (
             event.key === "Delete" &&
@@ -2440,6 +3611,7 @@ document.addEventListener(
                 selectedBoxId
             );
         }
+
 
         if (
             event.key === "Escape"
@@ -2456,6 +3628,8 @@ document.addEventListener(
             );
 
             closeModal();
+
+            clearParentHighlight();
         }
     }
 );
@@ -2463,31 +3637,29 @@ document.addEventListener(
 
 function deleteBox(id) {
 
-    /*
-       Remove the selected box and
-       all descendants.
-    */
-
-    const idsToDelete =
+    const ids =
         new Set([id]);
 
+
     let changed = true;
+
 
     while (changed) {
 
         changed = false;
 
+
         boxes.forEach(box => {
 
             if (
                 box.parentId &&
-                idsToDelete.has(
+                ids.has(
                     box.parentId
                 ) &&
-                !idsToDelete.has(box.id)
+                !ids.has(box.id)
             ) {
 
-                idsToDelete.add(
+                ids.add(
                     box.id
                 );
 
@@ -2496,15 +3668,18 @@ function deleteBox(id) {
         });
     }
 
+
     boxes =
         boxes.filter(
             box =>
-                !idsToDelete.has(
+                !ids.has(
                     box.id
                 )
         );
 
+
     selectedBoxId = null;
+
 
     renderBoxes();
     renderSidebar();
@@ -2513,172 +3688,11 @@ function deleteBox(id) {
 
 
 /* =========================================================
-   PROJECT NAME
-========================================================= */
-
-projectNameInput.addEventListener(
-    "input",
-    () => {}
-);
-
-
-/* =========================================================
-   EXPORT
-========================================================= */
-
-function getPositionDescription(box) {
-
-    const absolute =
-        getAbsolutePosition(box);
-
-    const startColumn =
-        absolute.x + 1;
-
-    const endColumn =
-        absolute.x + box.width;
-
-    const startRow =
-        absolute.y + 1;
-
-    const endRow =
-        absolute.y + box.height;
-
-    const columnText =
-        startColumn === endColumn
-            ? `${startColumn}`
-            : `${startColumn}-${endColumn}`;
-
-    const rowText =
-        startRow === endRow
-            ? `${startRow}`
-            : `${startRow}-${endRow}`;
-
-    return `Row ${rowText}, Columns ${columnText}`;
-}
-
-
-function generateExportText() {
-
-    let output =
-        `PROJECT: ${projectNameInput.value.trim() || "Untitled Project"}\n\n`;
-
-    boxes.forEach(box => {
-
-        const parent =
-            getBox(box.parentId);
-
-        const colorPercent =
-            box.colorRole === "primary"
-                ? "60%"
-                : box.colorRole === "secondary"
-                    ? "30%"
-                    : box.colorRole === "accent"
-                        ? "10%"
-                        : "Custom";
-
-        const colorName =
-            box.colorRole
-                .charAt(0)
-                .toUpperCase() +
-            box.colorRole.slice(1);
-
-        output +=
-`BOX ${box.number}: ${box.label || "Untitled"}
-Description: ${box.description || ""}
-Position: ${getPositionDescription(box)}
-Size: ${box.width} columns × ${box.height} rows
-Parent: ${
-    parent
-        ? `Box ${parent.number} (${parent.label})`
-        : "None"
-}
-Color: ${colorName}${
-    box.colorRole === "custom"
-        ? ` (${box.customColor})`
-        : ` (${colorPercent})`
-}
-
-`;
-    });
-
-    return output.trim();
-}
-
-
-document
-    .getElementById("copyButton")
-    .addEventListener(
-        "click",
-        async () => {
-
-            const text =
-                generateExportText();
-
-            try {
-
-                await navigator.clipboard.writeText(
-                    text
-                );
-
-            } catch (error) {
-
-                /*
-                   Fallback for environments
-                   where Clipboard API is blocked.
-                */
-
-                const textarea =
-                    document.createElement(
-                        "textarea"
-                    );
-
-                textarea.value =
-                    text;
-
-                document.body.appendChild(
-                    textarea
-                );
-
-                textarea.select();
-
-                document.execCommand(
-                    "copy"
-                );
-
-                textarea.remove();
-            }
-
-            showCopiedMessage();
-        }
-    );
-
-
-function showCopiedMessage() {
-
-    const message =
-        document.getElementById(
-            "copyMessage"
-        );
-
-    message.classList.add("show");
-
-    setTimeout(
-        () => {
-            message.classList.remove(
-                "show"
-            );
-        },
-        2000
-    );
-}
-
-
-/* =========================================================
-   CANVAS CLICK
+   CANVAS SELECTION
 ========================================================= */
 
 canvas.addEventListener(
-    "click",
+    "pointerdown",
     event => {
 
         if (
@@ -2697,13 +3711,206 @@ canvas.addEventListener(
 
 
 /* =========================================================
-   INITIAL RENDER
+   COPY
 ========================================================= */
 
-updateColorSystem();
+function positionText(box) {
+
+    const absolute =
+        getAbsolutePosition(box);
+
+
+    const startColumn =
+        absolute.x + 1;
+
+    const endColumn =
+        absolute.x +
+        box.width;
+
+
+    const startRow =
+        absolute.y + 1;
+
+    const endRow =
+        absolute.y +
+        box.height;
+
+
+    const columns =
+        startColumn === endColumn
+            ? `${startColumn}`
+            : `${startColumn}-${endColumn}`;
+
+
+    const rows =
+        startRow === endRow
+            ? `${startRow}`
+            : `${startRow}-${endRow}`;
+
+
+    return (
+        `Row ${rows}, Columns ${columns}`
+    );
+}
+
+
+function generateExportText() {
+
+    let text =
+        `PROJECT: ${
+            projectNameInput.value.trim() ||
+            "Untitled Project"
+        }\n\n`;
+
+
+    boxes.forEach(box => {
+
+        const parent =
+            getBox(box.parentId);
+
+
+        let color;
+
+
+        if (
+            box.colorRole ===
+            "primary"
+        ) {
+
+            color =
+                "Primary (60%)";
+
+        } else if (
+            box.colorRole ===
+            "secondary"
+        ) {
+
+            color =
+                "Secondary (30%)";
+
+        } else if (
+            box.colorRole ===
+            "accent"
+        ) {
+
+            color =
+                "Accent (10%)";
+
+        } else {
+
+            color =
+                `Custom (${box.customColor})`;
+        }
+
+
+        text +=
+`BOX ${box.number}: ${box.label || "Untitled"}
+Description: ${box.description || ""}
+Position: ${positionText(box)}
+Size: ${box.width} columns × ${box.height} rows
+Parent: ${
+    parent
+        ? `Box ${parent.number} (${parent.label || "Untitled"})`
+        : "None"
+}
+Color: ${color}
+
+`;
+    });
+
+
+    return text.trim();
+}
+
+
+document.getElementById(
+    "copyButton"
+).addEventListener(
+    "click",
+    async () => {
+
+        const text =
+            generateExportText();
+
+
+        try {
+
+            await navigator.clipboard.writeText(
+                text
+            );
+
+        } catch {
+
+            const textarea =
+                document.createElement(
+                    "textarea"
+                );
+
+            textarea.value =
+                text;
+
+            document.body.appendChild(
+                textarea
+            );
+
+            textarea.select();
+
+            document.execCommand(
+                "copy"
+            );
+
+            textarea.remove();
+        }
+
+
+        const message =
+            document.getElementById(
+                "copyMessage"
+            );
+
+
+        message.classList.add(
+            "show"
+        );
+
+
+        setTimeout(
+            () =>
+                message.classList.remove(
+                    "show"
+                ),
+            2000
+        );
+    }
+);
+
+
+/* =========================================================
+   MODAL BACKDROP
+========================================================= */
+
+document.getElementById(
+    "modalOverlay"
+).addEventListener(
+    "pointerdown",
+    event => {
+
+        if (
+            event.target ===
+            event.currentTarget
+        ) {
+
+            closeModal();
+        }
+    }
+);
+
+
+/* =========================================================
+   INITIAL STATE
+========================================================= */
 
 renderBoxes();
-
 renderSidebar();
 
 </script>
