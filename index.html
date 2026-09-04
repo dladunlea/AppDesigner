@@ -577,53 +577,6 @@ body {
 }
 
 /* =========================================================
-   MODAL
-========================================================= */
-
-.modal-overlay {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(20,25,30,.35);
-    z-index: 5000;
-}
-
-.modal-overlay.hidden {
-    display: none;
-}
-
-.modal {
-    width: 370px;
-    max-width: calc(100vw - 30px);
-    padding: 20px;
-    background: white;
-    border-radius: 9px;
-    box-shadow: 0 10px 40px rgba(0,0,0,.2);
-}
-
-.modal h2 {
-    margin: 0 0 15px;
-    font-size: 18px;
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    margin-top: 15px;
-}
-
-.secondary-button {
-    border: 1px solid #c7cdd1;
-    border-radius: 6px;
-    padding: 8px 13px;
-    background: white;
-    cursor: pointer;
-}
-
-/* =========================================================
    COPY MESSAGE
 ========================================================= */
 
@@ -683,10 +636,6 @@ body {
     color: #475569;
 }
 
-
-.hue-slider-green {
-    accent-color: #2e8b57;
-}
 
 #hueSlider { accent-color: #6b8f72; }
 .hue-slider-wrap { position: relative; width: 260px; height: 24px; display: flex; align-items: center; }
@@ -793,66 +742,6 @@ body {
             <textarea id="descriptionInput"></textarea>
         </div>
 
-        <div class="field">
-
-            <label>Position</label>
-
-            <div class="two-column">
-
-                <div>
-                    <label>X / Column</label>
-                    <input
-                        id="xInput"
-                        type="number"
-                        min="1"
-                        max="24"
-                    >
-                </div>
-
-                <div>
-                    <label>Y / Row</label>
-                    <input
-                        id="yInput"
-                        type="number"
-                        min="1"
-                        max="20"
-                    >
-                </div>
-
-            </div>
-
-        </div>
-
-        <div class="field">
-
-            <label>Size</label>
-
-            <div class="two-column">
-
-                <div>
-                    <label>Width</label>
-                    <input
-                        id="widthInput"
-                        type="number"
-                        min="1"
-                        max="24"
-                    >
-                </div>
-
-                <div>
-                    <label>Height</label>
-                    <input
-                        id="heightInput"
-                        type="number"
-                        min="1"
-                        max="20"
-                    >
-                </div>
-
-            </div>
-
-        </div>
-
         <div id="responsiveResetRow" class="responsive-reset-row">
             <button id="resetResponsiveButton" type="button" class="secondary-button">
                 Reset to Base Layout
@@ -946,63 +835,6 @@ body {
     </div>
 
 </footer>
-
-</div>
-
-
-<!-- CREATE BOX MODAL -->
-
-<div
-    id="modalOverlay"
-    class="modal-overlay hidden"
->
-
-    <div class="modal">
-
-        <h2>Create Box</h2>
-
-        <div class="field">
-
-            <label>Label</label>
-
-            <input
-                id="modalLabel"
-                type="text"
-                placeholder="Example: Header"
-            >
-
-        </div>
-
-        <div class="field">
-
-            <label>Description</label>
-
-            <textarea
-                id="modalDescription"
-                placeholder="Example: Top navigation bar"
-            ></textarea>
-
-        </div>
-
-        <div class="modal-actions">
-
-            <button
-                id="cancelModal"
-                class="secondary-button"
-            >
-                Cancel
-            </button>
-
-            <button
-                id="createModal"
-                class="primary-button"
-            >
-                Create Box
-            </button>
-
-        </div>
-
-    </div>
 
 </div>
 
@@ -1164,14 +996,6 @@ function markLayoutOverride(box) {
     box.responsiveOverrides[activeDevice] = geometryFromBox(box);
 }
 
-function updatePropertyInputLimits() {
-    const ids = ["xInput", "yInput", "widthInput", "heightInput"];
-    ids.forEach(id => {
-        const input = document.getElementById(id);
-        if (input) input.max = id.startsWith("x") || id.startsWith("width") ? GRID_COLUMNS : GRID_ROWS;
-    });
-}
-
 function applyDevice(device) {
     saveCurrentDeviceLayouts();
     ensureLayouts();
@@ -1203,7 +1027,6 @@ function applyDevice(device) {
     const deviceLabel = document.getElementById("deviceLabel");
     if (deviceLabel) deviceLabel.textContent = DEVICE_CONFIG[activeDevice].label;
 
-    updatePropertyInputLimits();
     renderBoxes();
     renderSidebar();
     updatePropertyPanel();
@@ -1230,8 +1053,6 @@ const addBoxButton = document.getElementById("addBoxButton");
 const propertyPanel = document.getElementById("propertyPanel");
 const projectNameInput = document.getElementById("projectName");
 const hueSlider = document.getElementById("hueSlider");
-const previewWidthInput = document.getElementById("previewWidth");
-const previewWidthLabel = document.getElementById("previewWidthLabel");
 
 function getDisplayCellSize() {
     return previewWidth / GRID_COLUMNS;
@@ -1699,16 +1520,6 @@ function updatePropertyPanel() {
     document.getElementById("labelInput").value = box.label;
     document.getElementById("descriptionInput").value = box.description;
 
-    /*
-      Sidebar X/Y are LOCAL coordinates when nested,
-      and canvas coordinates when top-level.
-    */
-    document.getElementById("xInput").value = box.x + 1;
-    document.getElementById("yInput").value = box.y + 1;
-
-    document.getElementById("widthInput").value = box.width;
-    document.getElementById("heightInput").value = box.height;
-
     populateParentSelect(box);
 
     document.querySelectorAll(".role-option").forEach(button => {
@@ -1799,85 +1610,6 @@ document.getElementById("descriptionInput").addEventListener("input", event => {
             description.textContent = box.description || "";
         }
     }
-});
-
-function applyPropertyChange() {
-    const box = getBox(selectedBoxId);
-    if (!box) return;
-
-    const newX =
-        Number(document.getElementById("xInput").value) - 1;
-
-    const newY =
-        Number(document.getElementById("yInput").value) - 1;
-
-    const newWidth =
-        Number(document.getElementById("widthInput").value);
-
-    const newHeight =
-        Number(document.getElementById("heightInput").value);
-
-    if (
-        !Number.isInteger(newX) ||
-        !Number.isInteger(newY) ||
-        !Number.isInteger(newWidth) ||
-        !Number.isInteger(newHeight) ||
-        newWidth < 1 ||
-        newHeight < 1
-    ) {
-        updatePropertyPanel();
-        return;
-    }
-
-    const absolute = localFromAbsolute(
-        box,
-        newX,
-        newY,
-        box.parentId
-    );
-
-    if (
-        !canPlaceAbsolute(
-            box,
-            absolute.x,
-            absolute.y,
-            newWidth,
-            newHeight,
-            box.parentId
-        )
-    ) {
-        updatePropertyPanel();
-        return;
-    }
-
-    if (
-        !canResizeParent(box, {
-            x: absolute.x,
-            y: absolute.y,
-            width: newWidth,
-            height: newHeight
-        })
-    ) {
-        updatePropertyPanel();
-        return;
-    }
-
-    box.x = newX;
-    box.y = newY;
-    box.width = newWidth;
-    box.height = newHeight;
-    markLayoutOverride(box);
-
-    renderBoxes();
-    renderSidebar();
-    updatePropertyPanel();
-}
-
-["xInput", "yInput", "widthInput", "heightInput"].forEach(id => {
-    document.getElementById(id).addEventListener(
-        "change",
-        applyPropertyChange
-    );
 });
 
 /* =========================================================
@@ -2097,15 +1829,6 @@ canvas.addEventListener("pointerup", event => {
     width = Math.min(width, GRID_COLUMNS - x);
     height = Math.min(height, GRID_ROWS - y);
 
-    const testBox = {
-        id: "__new__",
-        x,
-        y,
-        width,
-        height,
-        parentId: null
-    };
-
     const collision = boxes.some(other =>
         overlaps(
             {
@@ -2120,22 +1843,15 @@ canvas.addEventListener("pointerup", event => {
 
     if (collision) {
         alert(
-            "This box overlaps another box. Please choose a different area."
+            "This box overlaps another box. Add Box mode has been cancelled."
         );
-
-        createStart = null;
+        cancelAddMode();
         return;
     }
 
-    pendingBox = {
-        x,
-        y,
-        width,
-        height
-    };
+    createBox({ x, y, width, height });
 
     createStart = null;
-    openModal();
 });
 
 canvas.addEventListener("pointercancel", () => {
@@ -2143,53 +1859,21 @@ canvas.addEventListener("pointercancel", () => {
     createStart = null;
 });
 
-/* =========================================================
-   MODAL
-========================================================= */
-function openModal() {
-    document.getElementById("modalLabel").value = "";
-    document.getElementById("modalDescription").value = "";
-
-    document.getElementById("modalOverlay")
-        .classList.remove("hidden");
-
-    setTimeout(() => {
-        document.getElementById("modalLabel").focus();
-    }, 50);
+function cancelAddMode() {
+    creating = false;
+    createStart = null;
+    addMode = false;
+    addBoxButton.classList.remove("active");
+    canvas.classList.remove("add-mode");
 }
 
-function closeModal() {
-    document.getElementById("modalOverlay")
-        .classList.add("hidden");
+function createBox(geometry) {
+    if (!geometry) return;
 
-    pendingBox = null;
-}
+    const number = nextBoxNumber;
 
-document.getElementById("cancelModal")
-    .addEventListener("click", closeModal);
-
-document.getElementById("createModal")
-    .addEventListener("click", createBox);
-
-document.getElementById("modalLabel")
-    .addEventListener("keydown", event => {
-        if (event.key === "Enter") {
-            createBox();
-        }
-    });
-
-function createBox() {
-    if (!pendingBox) return;
-
-    const number = nextBoxNumber++;
-
-    const label =
-        document.getElementById("modalLabel")
-            .value.trim();
-
-    const description =
-        document.getElementById("modalDescription")
-            .value.trim();
+    const label = `Box ${number}`;
+    const description = "";
 
     const box = {
         id:
@@ -2205,11 +1889,11 @@ function createBox() {
 
         description,
 
-        x: pendingBox.x,
-        y: pendingBox.y,
+        x: geometry.x,
+        y: geometry.y,
 
-        width: pendingBox.width,
-        height: pendingBox.height,
+        width: geometry.width,
+        height: geometry.height,
 
         parentId: null,
 
@@ -2233,11 +1917,13 @@ function createBox() {
         )
     ) {
         alert(
-            "This box overlaps another box. Please choose a different area."
+            "There is no room for a new box here. Add Box mode has been cancelled."
         );
+        cancelAddMode();
         return;
     }
 
+    nextBoxNumber++;
     boxes.push(box);
     ensureResponsiveModel(box);
 
@@ -2249,7 +1935,7 @@ function createBox() {
 
     ensureLayouts();
 
-    closeModal();
+    cancelAddMode();
     selectBox(box.id);
 }
 
@@ -2838,7 +2524,7 @@ document.addEventListener("keydown", event => {
         addBoxButton.classList.remove("active");
         canvas.classList.remove("add-mode");
 
-        closeModal();
+        cancelAddMode();
         clearParentHighlight();
 
         if (interaction) {
@@ -3192,18 +2878,6 @@ copyButton.addEventListener("click", async () => {
         }, 1800);
     }
 });
-
-/* =========================================================
-   MODAL BACKDROP
-========================================================= */
-document.getElementById("modalOverlay")
-    .addEventListener("pointerdown", event => {
-        if (
-            event.target === event.currentTarget
-        ) {
-            closeModal();
-        }
-    });
 
 /* =========================================================
    DEVICE SWITCHER
