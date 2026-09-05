@@ -786,6 +786,24 @@ body {
             <textarea id="descriptionInput"></textarea>
         </div>
 
+        <div class="field">
+            <label>Type</label>
+            <input
+                id="typeInput"
+                type="text"
+                placeholder="e.g. button, input, heading, graph"
+            >
+        </div>
+
+        <div class="field">
+            <label>Behavior</label>
+            <input
+                id="behaviorInput"
+                type="text"
+                placeholder="What should this element do?"
+            >
+        </div>
+
         <div id="responsiveResetRow" class="responsive-reset-row">
             <button id="resetResponsiveButton" type="button" class="secondary-button">
                 Reset to Base Layout
@@ -1586,8 +1604,10 @@ function updatePropertyPanel() {
         resetResponsiveButton.style.display = activeDevice === "pc" ? "none" : "block";
     }
 
-    document.getElementById("labelInput").value = box.label;
-    document.getElementById("descriptionInput").value = box.description;
+    document.getElementById("labelInput").value = box.label || "";
+    document.getElementById("descriptionInput").value = box.description || "";
+    document.getElementById("typeInput").value = box.type || "";
+    document.getElementById("behaviorInput").value = box.behavior || "";
 
     populateParentSelect(box);
 
@@ -1679,6 +1699,20 @@ document.getElementById("descriptionInput").addEventListener("input", event => {
             description.textContent = box.description || "";
         }
     }
+});
+
+document.getElementById("typeInput").addEventListener("input", event => {
+    const box = getBox(selectedBoxId);
+    if (!box) return;
+
+    box.type = event.target.value;
+});
+
+document.getElementById("behaviorInput").addEventListener("input", event => {
+    const box = getBox(selectedBoxId);
+    if (!box) return;
+
+    box.behavior = event.target.value;
 });
 
 
@@ -1908,6 +1942,8 @@ canvas.addEventListener("pointerup", event => {
         number,
         label: `Box ${number}`,
         description: "",
+        type: "",
+        behavior: "",
         x,
         y,
         width,
@@ -2685,109 +2721,145 @@ function generateExportText() {
     ensureLayouts();
 
     const project = projectNameInput.value.trim() || "Untitled Project";
-    const primary = hexFromColor(`hsl(${currentHue()},25%,90%)`);
-    const secondary = hexFromColor(`hsl(${currentHue()},35%,78%)`);
-    const accent = hexFromColor(`hsl(${currentHue()},50%,55%)`);
+    const hue = currentHue();
+
+    const primary = hexFromColor(`hsl(${hue},25%,90%)`);
+    const secondary = hexFromColor(`hsl(${hue},35%,78%)`);
+    const accent = hexFromColor(`hsl(${hue},50%,55%)`);
 
     const lines = [];
 
-    lines.push(`AI WEB DESIGN BRIEF`);
-    lines.push(`===================`);
-    lines.push(``);
-    lines.push(`Use the information below as a visual and functional design brief for a website.`);
-    lines.push(`This describes DESIGN INTENT, not a pixel-perfect specification.`);
-    lines.push(``);
-    lines.push(`PROJECT`);
-    lines.push(`-------`);
-    lines.push(`${project}`);
-    lines.push(``);
-    lines.push(`IMPORTANT: Do NOT recreate the planner grid or treat its coordinates, cell counts,`);
-    lines.push(`widths, heights, or measurements as fixed CSS values. The layout descriptions are`);
-    lines.push(`approximate references for hierarchy, positioning, proportions, and relationships.`);
-    lines.push(`Build the final site with responsive HTML/CSS that adapts naturally to different`);
-    lines.push(`screen sizes and orientations.`);
-    lines.push(``);
+    function width(box, device) {
+        const layout = getEffectiveGeometry(box, device, {});
+        const ratio = layout.width / DEVICE_CONFIG[device].columns;
 
-    lines.push(`COLOR DIRECTION`);
-    lines.push(`--------------`);
-    lines.push(`The planner uses a continuous color spectrum. The selected colors are visual references:`);
-    lines.push(`Primary: ${primary}`);
-    lines.push(`Secondary: ${secondary}`);
-    lines.push(`Accent: ${accent}`);
-    lines.push(`Overall hue position: approximately ${currentHue()}° on the spectrum.`);
-    lines.push(`Use these colors as a starting point and adjust shades as needed for contrast,`);
-    lines.push(`accessibility, readability, and a cohesive visual system.`);
-    lines.push(``);
-
-    lines.push(`PAGE STRUCTURE AND ELEMENTS`);
-    lines.push(`--------------------------`);
-    lines.push(``);
-
-    function qualitativeWidth(box, mode) {
-        const layout = getEffectiveGeometry(box, mode, {});
-        const cols = DEVICE_CONFIG[mode].columns;
-        const ratio = layout.width / cols;
-        if (ratio >= 0.85) return "full-width";
+        if (ratio >= 0.85) return "full";
         if (ratio >= 0.60) return "large";
         if (ratio >= 0.35) return "medium";
         return "small";
     }
 
-    function qualitativePosition(box, mode) {
-        const layout = getEffectiveGeometry(box, mode, {});
-        const cfg = DEVICE_CONFIG[mode];
+    function position(box, device) {
+        const layout = getEffectiveGeometry(box, device, {});
+        const cfg = DEVICE_CONFIG[device];
+
         const cx = (layout.x + layout.width / 2) / cfg.columns;
         const cy = (layout.y + layout.height / 2) / cfg.rows;
-        const horizontal = cx < 0.33 ? "left" : cx > 0.67 ? "right" : "center";
-        const vertical = cy < 0.33 ? "top" : cy > 0.67 ? "bottom" : "middle";
+
+        const horizontal =
+            cx < 0.33 ? "left" :
+            cx > 0.67 ? "right" :
+            "center";
+
+        const vertical =
+            cy < 0.33 ? "top" :
+            cy > 0.67 ? "bottom" :
+            "middle";
+
         return `${vertical}-${horizontal}`;
     }
+
+    lines.push("AI WEB APP SPECIFICATION");
+    lines.push("========================");
+    lines.push("");
+    lines.push(`PROJECT: ${project}`);
+    lines.push("");
+
+    lines.push("DESIGN DIRECTION");
+    lines.push("----------------");
+    lines.push(`Primary: ${primary}`);
+    lines.push(`Secondary: ${secondary}`);
+    lines.push(`Accent: ${accent}`);
+    lines.push(`Hue: approximately ${hue}°`);
+    lines.push("Use these as visual references, not fixed colors.");
+    lines.push("");
+
+    lines.push("IMPORTANT LAYOUT RULE");
+    lines.push("----------------------");
+    lines.push("The planner grid is only a planning tool.");
+    lines.push("Do NOT recreate the grid.");
+    lines.push("Do NOT use planner coordinates, cell counts, widths, or heights as fixed CSS.");
+    lines.push("Use responsive HTML/CSS with Grid, Flexbox, flexible sizing, and media/container queries.");
+    lines.push("");
+
+    lines.push("PAGE ELEMENTS");
+    lines.push("-------------");
 
     boxes.forEach(box => {
         const parent = getBox(box.parentId);
         const color = colorInfo(box);
 
+        lines.push("");
         lines.push(`ELEMENT: ${box.label || `Box ${box.number}`}`);
-        lines.push(`Purpose / Function: ${box.description || "No description provided."}`);
-        lines.push(`Hierarchy: ${parent ? `Inside ${parent.label || `Box ${parent.number}`}` : "Top-level page element"}`);
-        lines.push(`Color role: ${color.role}`);
-        lines.push(`Suggested color: ${color.hex}`);
-        lines.push(``);
-        lines.push(`APPROXIMATE LAYOUT INTENT`);
-        lines.push(`Desktop: ${qualitativePosition(box, "pc")}, ${qualitativeWidth(box, "pc")} visual area.`);
-        lines.push(`Tablet: ${qualitativePosition(box, "tablet")}, ${qualitativeWidth(box, "tablet")} visual area.`);
-        lines.push(`Mobile: ${qualitativePosition(box, "mobile")}, ${qualitativeWidth(box, "mobile")} visual area.`);
+
+        if (box.type) {
+            lines.push(`Type: ${box.type}`);
+        }
+
+        if (box.description) {
+            lines.push(`Purpose: ${box.description}`);
+        }
+
+        if (box.behavior) {
+            lines.push(`Behavior: ${box.behavior}`);
+        }
+
+        lines.push(
+            `Hierarchy: ${
+                parent
+                    ? `Inside ${parent.label || `Box ${parent.number}`}`
+                    : "Top-level"
+            }`
+        );
+
+        lines.push(`Color: ${color.role}; ${color.hex}`);
+
+        lines.push(
+            `Layout: Desktop ${position(box, "pc")}/${width(box, "pc")}; ` +
+            `Tablet ${position(box, "tablet")}/${width(box, "tablet")}; ` +
+            `Mobile ${position(box, "mobile")}/${width(box, "mobile")}.`
+        );
 
         if (getResponsiveOverride(box, "tablet")) {
-            lines.push(`Tablet responsive behavior: intentionally different from the desktop arrangement.`);
-        } else {
-            lines.push(`Tablet responsive behavior: adapt the desktop arrangement naturally.`);
-        }
-        if (getResponsiveOverride(box, "mobile")) {
-            lines.push(`Mobile responsive behavior: intentionally different from the desktop arrangement.`);
-        } else {
-            lines.push(`Mobile responsive behavior: adapt the desktop arrangement naturally.`);
+            lines.push("Tablet: use the intentionally planned responsive arrangement.");
         }
 
-        lines.push(``);
-        lines.push(`Design guidance: Preserve this element's purpose, hierarchy, relationship to nearby elements,`);
-        lines.push(`and approximate visual prominence. Choose an appropriate responsive layout method rather`);
-        lines.push(`than copying planner dimensions.`);
-        lines.push(``);
-        lines.push(`----------------------------------------`);
-        lines.push(``);
+        if (getResponsiveOverride(box, "mobile")) {
+            lines.push("Mobile: use the intentionally planned responsive arrangement.");
+        }
     });
 
-    lines.push(`RESPONSIVE DESIGN EXPECTATIONS`);
-    lines.push(`------------------------------`);
-    lines.push(`Desktop should establish the primary composition.`);
-    lines.push(`Tablet should preserve the hierarchy while allowing elements to resize, wrap, stack, or reposition.`);
-    lines.push(`Mobile should prioritize usability, readable content, and sensible stacking/repositioning.`);
-    lines.push(`Use semantic HTML plus CSS Grid, Flexbox, flexible units, and media/container queries as appropriate.`);
-    lines.push(`Do not reproduce the planner's grid.`);
-    lines.push(`Do not use the planner's measurements as fixed website dimensions.`);
-    lines.push(``);
-    lines.push(`END OF DESIGN BRIEF`);
+    lines.push("");
+    lines.push("FUNCTIONAL REQUIREMENTS");
+    lines.push("-----------------------");
+
+    boxes.forEach(box => {
+        if (!box.behavior) return;
+
+        lines.push(
+            `${box.label || `Box ${box.number}`}: ${box.behavior}`
+        );
+    });
+
+    lines.push("");
+    lines.push("RESPONSIVE REQUIREMENTS");
+    lines.push("-----------------------");
+    lines.push("Desktop establishes the main composition.");
+    lines.push("Tablet preserves hierarchy while allowing resizing, wrapping, stacking, or repositioning.");
+    lines.push("Mobile prioritizes usability, readable content, and sensible stacking.");
+    lines.push("Preserve the relationships and hierarchy represented by the planner.");
+    lines.push("");
+
+    lines.push("IMPLEMENTATION RULES");
+    lines.push("--------------------");
+    lines.push("Use semantic HTML.");
+    lines.push("Make interactive elements actually functional.");
+    lines.push("Do not invent functionality that is not specified.");
+    lines.push("Use the Type, Purpose, and Behavior fields to determine how each element should work.");
+    lines.push("Treat the layout information as visual intent rather than pixel-perfect instructions.");
+    lines.push("");
+
+    lines.push("END OF SPECIFICATION");
 
     return lines.join("\n");
 }
