@@ -223,7 +223,7 @@ body {
 .add-box-button:hover,
 .add-box-button.active {
     border-color: var(--accent);
-    background: hsl(var(--hue), 50%, 96%);
+    background: (var(--hue), 50%, 96%);
 }
 
 .box-list {
@@ -259,7 +259,7 @@ body {
 }
 
 .box-list-item.selected {
-    background: hsl(var(--hue), 60%, 93%);
+    background: (var(--hue), 60%, 93%);
 }
 
 .box-color {
@@ -465,7 +465,7 @@ body {
 .field input:focus,
 .field textarea:focus,
 .field select:focus {
-    outline: 2px solid hsl(var(--hue), 65%, 88%);
+    outline: 2px solid (var(--hue), 65%, 88%);
     border-color: var(--accent);
 }
 
@@ -504,7 +504,7 @@ body {
 
 .role-option.active {
     border-color: var(--accent);
-    background: hsl(var(--hue), 60%, 94%);
+    background: (var(--hue), 60%, 94%);
 }
 
 .custom-color-row {
@@ -574,6 +574,53 @@ body {
     hsl(285, 40%, 55%),
     hsl(250, 45%, 58%)
 );
+}
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(20,25,30,.35);
+    z-index: 5000;
+}
+
+.modal-overlay.hidden {
+    display: none;
+}
+
+.modal {
+    width: 370px;
+    max-width: calc(100vw - 30px);
+    padding: 20px;
+    background: white;
+    border-radius: 9px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.2);
+}
+
+.modal h2 {
+    margin: 0 0 15px;
+    font-size: 18px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.secondary-button {
+    border: 1px solid #c7cdd1;
+    border-radius: 6px;
+    padding: 8px 13px;
+    background: white;
+    cursor: pointer;
 }
 
 /* =========================================================
@@ -836,6 +883,7 @@ body {
 </div>
 
 
+
 <div
     id="copyMessage"
     class="copy-message"
@@ -868,8 +916,6 @@ let boxes = [];
 let selectedBoxId = null;
 let nextBoxNumber = 1;
 let addMode = false;
-let gridZoom = 1;
-const MIN_GRID_ZOOM = 0.5, MAX_GRID_ZOOM = 2.5, GRID_ZOOM_STEP = 0.1;
 
 /* =========================================================
    RESPONSIVE LAYOUT MODEL
@@ -1036,6 +1082,17 @@ function ensureLayouts() {
     boxes.forEach(box => ensureResponsiveModel(box));
 }
 
+/* =========================================================
+   DEVICE SWITCHER
+========================================================= */
+document.querySelectorAll(".device-button").forEach(button => {
+    button.addEventListener("click", () => {
+        const device = button.dataset.device;
+        if (!DEVICE_CONFIG[device] || device === activeDevice) return;
+        applyDevice(device);
+    });
+});
+
 /*
   IMPORTANT:
   Dragging/resizing is handled at the canvas/window level.
@@ -1053,6 +1110,8 @@ const addBoxButton = document.getElementById("addBoxButton");
 const propertyPanel = document.getElementById("propertyPanel");
 const projectNameInput = document.getElementById("projectName");
 const hueSlider = document.getElementById("hueSlider");
+const previewWidthInput = document.getElementById("previewWidth");
+const previewWidthLabel = document.getElementById("previewWidthLabel");
 
 function getDisplayCellSize() {
     return previewWidth / GRID_COLUMNS;
@@ -1064,6 +1123,16 @@ function updatePreviewSize() {
     canvas.style.width = `${previewWidth}px`;
     canvas.style.height = `${GRID_ROWS * cell}px`;
 
+    if (previewWidthInput) previewWidthInput.value = Math.round(previewWidth);
+    if (previewWidthLabel) previewWidthLabel.textContent = `${Math.round(previewWidth)}px`;
+}
+
+if (previewWidthInput) {
+    previewWidthInput.addEventListener("input", () => {
+        previewWidth = Number(previewWidthInput.value);
+        updatePreviewSize();
+        renderBoxes();
+    });
 }
 
 updatePreviewSize();
@@ -1258,6 +1327,13 @@ function canResizeParent(box, newAbsoluteRect) {
 /* =========================================================
    GREEN COLOR SCHEMES
 ========================================================= */
+function greenHueFromSlider() {
+    // The slider still provides variety, but remains in a green family:
+    // emerald -> teal-green -> leaf -> forest.
+    const t = Number(hueSlider.value) / 100;
+    return Math.round(135 + t * 65);
+}
+
 function currentHue(){
  const t=Number(hueSlider.value)/100; const s=[{t:0,h:215},{t:.08,h:195},{t:.16,h:175},{t:.24,h:150},{t:.32,h:125},{t:.40,h:100},{t:.48,h:75},{t:.56,h:55},{t:.64,h:35},{t:.72,h:15},{t:.80,h:350},{t:.88,h:315},{t:0.94,h:285},{t:1,h:250}];
  for(let i=0;i<s.length-1;i++){if(t<=s[i+1].t){const a=s[i],b=s[i+1],q=(t-a.t)/(b.t-a.t);return Math.round(a.h+(b.h-a.h)*q);}} return 55;
@@ -1268,13 +1344,13 @@ function getBoxColor(box) {
 
     switch (box.colorRole) {
         case "secondary":
-            return `hsl(${hue},28%,78%)`;
+            return `hsl(${hue},45%,78%)`;
         case "accent":
-            return `hsl(${hue},42%,55%)`;
+            return `hsl(${hue},70%,55%)`;
         case "custom":
             return box.customColor;
         default:
-            return `hsl(${hue},18%,90%)`;
+            return `hsl(${hue},30%,90%)`;
     }
 }
 
@@ -1513,11 +1589,6 @@ function updatePropertyPanel() {
     document.getElementById("labelInput").value = box.label;
     document.getElementById("descriptionInput").value = box.description;
 
-    /*
-      Sidebar X/Y are LOCAL coordinates when nested,
-      and canvas coordinates when top-level.
-    */
-
     populateParentSelect(box);
 
     document.querySelectorAll(".role-option").forEach(button => {
@@ -1738,15 +1809,17 @@ document.getElementById("customColorInput").addEventListener("input", event => {
    ADD BOX MODE
 ========================================================= */
 function cancelAddMode() {
+    addMode = false;
     creating = false;
     createStart = null;
-    addMode = false;
     addBoxButton.classList.remove("active");
     canvas.classList.remove("add-mode");
 }
 
 addBoxButton.addEventListener("click", () => {
     addMode = !addMode;
+    creating = false;
+    createStart = null;
 
     addBoxButton.classList.toggle("active", addMode);
     canvas.classList.toggle("add-mode", addMode);
@@ -1765,22 +1838,17 @@ addBoxButton.addEventListener("click", () => {
 canvas.addEventListener("pointerdown", event => {
     if (!addMode) return;
 
-    /*
-      Only empty canvas starts creation.
-      Clicking an existing box is ignored.
-    */
-    if (event.target !== canvas) return;
+    /* Existing boxes are ignored; any other part of the planning surface can start creation. */
+    if (event.target.closest && event.target.closest(".layout-box")) return;
 
     event.preventDefault();
 
     const rect = canvas.getBoundingClientRect();
-
     const x = clamp(
         snapPixelsToCells((event.clientX - rect.left) / gridZoom),
         0,
         GRID_COLUMNS - 1
     );
-
     const y = clamp(
         snapPixelsToCells((event.clientY - rect.top) / gridZoom),
         0,
@@ -1789,21 +1857,13 @@ canvas.addEventListener("pointerdown", event => {
 
     createStart = { x, y };
     creating = true;
-
     canvas.setPointerCapture(event.pointerId);
-});
-
-canvas.addEventListener("pointermove", event => {
-    if (!creating || !createStart) return;
-
-    event.preventDefault();
 });
 
 canvas.addEventListener("pointerup", event => {
     if (!creating || !createStart) return;
 
     event.preventDefault();
-
     creating = false;
 
     if (canvas.hasPointerCapture(event.pointerId)) {
@@ -1811,13 +1871,11 @@ canvas.addEventListener("pointerup", event => {
     }
 
     const rect = canvas.getBoundingClientRect();
-
     const endX = clamp(
         snapPixelsToCells((event.clientX - rect.left) / gridZoom),
         0,
         GRID_COLUMNS - 1
     );
-
     const endY = clamp(
         snapPixelsToCells((event.clientY - rect.top) / gridZoom),
         0,
@@ -1826,46 +1884,60 @@ canvas.addEventListener("pointerup", event => {
 
     let x = Math.min(createStart.x, endX);
     let y = Math.min(createStart.y, endY);
-
-    let width =
-        Math.abs(endX - createStart.x) + 1;
-
-    let height =
-        Math.abs(endY - createStart.y) + 1;
+    let width = Math.abs(endX - createStart.x) + 1;
+    let height = Math.abs(endY - createStart.y) + 1;
 
     width = Math.min(width, GRID_COLUMNS - x);
     height = Math.min(height, GRID_ROWS - y);
+    createStart = null;
 
-    const testBox = {
-        id: "__new__",
-        x,
-        y,
-        width,
-        height,
-        parentId: null
-    };
-
-    const collision = boxes.some(other =>
-        overlaps(
-            {
-                x,
-                y,
-                width,
-                height
-            },
-            getAbsoluteRect(other)
-        )
-    );
+    const testRect = { x, y, width, height };
+    const collision = boxes.some(other => overlaps(testRect, getAbsoluteRect(other)));
 
     if (collision) {
         alert("This box overlaps another box. Add Box mode has been cancelled.");
-        createStart = null;
         cancelAddMode();
         return;
     }
 
-    createStart = null;
-    createBox({ x, y, width, height });
+    const number = nextBoxNumber;
+    const box = {
+        id: typeof crypto !== "undefined" && crypto.randomUUID
+            ? crypto.randomUUID()
+            : `box-${Date.now()}-${Math.random()}`,
+        number,
+        label: `Box ${number}`,
+        description: "",
+        x,
+        y,
+        width,
+        height,
+        parentId: null,
+        colorRole: "primary",
+        customColor: "#8aa8c8",
+        baseLayout: null,
+        responsiveOverrides: { tablet: null, mobile: null }
+    };
+
+    if (!canPlaceAbsolute(box, x, y, width, height, null)) {
+        alert("There is no room for a new box here. Add Box mode has been cancelled.");
+        cancelAddMode();
+        return;
+    }
+
+    boxes.push(box);
+    nextBoxNumber++;
+    ensureResponsiveModel(box);
+
+    if (activeDevice === "pc") {
+        box.baseLayout = geometryFromBox(box);
+    } else {
+        box.responsiveOverrides[activeDevice] = geometryFromBox(box);
+    }
+
+    ensureLayouts();
+    cancelAddMode();
+    selectBox(box.id);
 });
 
 canvas.addEventListener("pointercancel", () => {
@@ -2453,7 +2525,11 @@ document.addEventListener("keydown", event => {
     }
 
     if (event.key === "Escape") {
-        cancelAddMode();
+        addMode = false;
+
+        addBoxButton.classList.remove("active");
+        canvas.classList.remove("add-mode");
+
         clearParentHighlight();
 
         if (interaction) {
@@ -2596,6 +2672,8 @@ function layoutText(box, device) {
 /* =========================================================
    GRID-ONLY ZOOM
 ========================================================= */
+let gridZoom = 1;
+const MIN_GRID_ZOOM = 0.5, MAX_GRID_ZOOM = 2.5, GRID_ZOOM_STEP = 0.1;
 function applyGridZoom(){const v=document.getElementById("zoomValue"),c=document.getElementById("canvas"),a=document.getElementById("canvasArea");if(v)v.textContent=`${Math.round(gridZoom*100)}%`;if(c){const w=Number(previewWidth)||1200,ht=GRID_ROWS*getDisplayCellSize();c.style.transformOrigin="top left";c.style.transform=`scale(${gridZoom})`;c.style.width=`${w}px`;c.style.height=`${ht}px`;c.style.marginRight=`${Math.max(0,w*(gridZoom-1))}px`;c.style.marginBottom=`${Math.max(0,ht*(gridZoom-1))}px`;}if(a)a.style.overflow="auto";}
 document.getElementById("zoomInButton")?.addEventListener("click",()=>{gridZoom=Math.min(MAX_GRID_ZOOM,+(gridZoom+GRID_ZOOM_STEP).toFixed(2));applyGridZoom();});
 document.getElementById("zoomOutButton")?.addEventListener("click",()=>{gridZoom=Math.max(MIN_GRID_ZOOM,+(gridZoom-GRID_ZOOM_STEP).toFixed(2));applyGridZoom();});
@@ -2806,15 +2884,6 @@ copyButton.addEventListener("click", async () => {
     }
 });
 
-/* =========================================================
-   DEVICE SWITCHER
-========================================================= */
-document.querySelectorAll(".device-button").forEach(button => {
-    button.addEventListener("click", () => {
-        if (interaction) return;
-        applyDevice(button.dataset.device);
-    });
-});
 
 /* =========================================================
    INITIAL STATE
